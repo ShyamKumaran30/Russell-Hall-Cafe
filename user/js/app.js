@@ -2847,77 +2847,93 @@
   }
 
   function fetchUserOrders(uid) {
-    const userEmail = (currentUser && currentUser.email) ? currentUser.email : '';
-    
+    const authEmail = (currentUser && currentUser.email) ? currentUser.email.toLowerCase().trim() : '';
+    const profileEmail = (currentUserProfile && currentUserProfile.email) ? currentUserProfile.email.toLowerCase().trim() : '';
+
     // Show loading state immediately
     const ordersList = $('#orders-history-list');
     if (ordersList) ordersList.innerHTML = '<p class="empty-msg">Loading your orders...</p>';
 
-    return db.collection('orders')
-      .where('userId', '==', uid)
-      .onSnapshot(snapshot => {
-        const orders = [];
-        snapshot.forEach(doc => {
+    // Run all lookups in parallel: by userId, by auth email, by profile email
+    function mergeAndRender(docs) {
+      const seen = new Set();
+      const orders = [];
+      docs.forEach(doc => {
+        if (!seen.has(doc.id)) {
+          seen.add(doc.id);
           orders.push({ id: doc.id, ...doc.data() });
-        });
-        orders.sort((a, b) => {
-          const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-          const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-          return timeB - timeA;
-        });
-
-        const ordersList = $('#orders-history-list');
-        if (ordersList) {
-          if (orders.length === 0) {
-            // Fallback: try searching by email for orders placed before userId was saved
-            if (userEmail) {
-              db.collection('orders')
-                .where('customerDetails.email', '==', userEmail)
-                .get()
-                .then(emailSnap => {
-                  const emailOrders = [];
-                  emailSnap.forEach(doc => emailOrders.push({ id: doc.id, ...doc.data() }));
-                  emailOrders.sort((a, b) => {
-                    const tA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-                    const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-                    return tB - tA;
-                  });
-                  if (emailOrders.length > 0) {
-                    // Patch userId on these old orders so future queries work
-                    emailOrders.forEach(o => {
-                      if (!o.userId) {
-                        db.collection('orders').doc(o.id).update({ userId: uid }).catch(() => {});
-                      }
-                    });
-                    renderOrdersList(emailOrders);
-                  } else {
-                    if (ordersList) ordersList.innerHTML = '<p class="empty-msg">No previous orders found. Orders appear here after you place one while logged in.</p>';
-                  }
-                }).catch(() => {
-                  if (ordersList) ordersList.innerHTML = '<p class="empty-msg">No previous orders found.</p>';
-                });
-            } else {
-              if (ordersList) ordersList.innerHTML = '<p class="empty-msg">No previous orders found.</p>';
-            }
-          } else {
-            renderOrdersList(orders);
-          }
-        }
-      }, error => {
-        console.error('[Firebase] Orders fetch error:', error.code, error.message);
-        const ordersList = $('#orders-history-list');
-        if (ordersList) {
-          let msg = 'Failed to load orders.';
-          if (error.code === 'permission-denied') {
-            msg = '⚠️ Access denied — Firestore rules not deployed. Go to Firebase Console → Firestore → Rules and publish them.';
-          } else if (error.code === 'failed-precondition') {
-            msg = '⚠️ Database index required — Please contact support to deploy Firestore indexes.';
-          } else {
-            msg = '⚠️ ' + (error.message || 'Unknown error loading orders.');
-          }
-          ordersList.innerHTML = `<p class="empty-msg" style="color:#e74c3c;">${msg}</p>`;
         }
       });
+      orders.sort((a, b) => {
+        const tA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return tB - tA;
+      });
+      // Auto-patch orders that are missing userId so future queries work
+      orders.forEach(o => {
+        if (!o.userId && o.id) {
+          db.collection('orders').doc(o.id).update({ userId: uid }).catch(() => {});
+        }
+      });
+      if (orders.length === 0) {
+        if (ordersList) ordersList.innerHTML = '<p class="empty-msg">No previous orders found. Orders placed while logged in will appear here.</p>';
+      } else {
+        renderOrdersList(orders);
+      }
+    }
+
+    // Primary real-time listener: by userId
+    const unsubscribe = db.collection('orders')
+      .where('userId', '==', uid)
+      .onSnapshot(async snapshot => {
+        const primaryDocs = snapshot.docs;
+
+        // Also fetch by email in parallel (these are one-time gets, not listeners)
+        const emailQueries = [];
+        if (authEmail) {
+          emailQueries.push(
+            db.collection('orders').where('customerDetails.email', '==', authEmail).get()
+          );
+          emailQueries.push(
+            db.collection('orders').where('userEmail', '==', authEmail).get()
+          );
+        }
+        if (profileEmail && profileEmail !== authEmail) {
+          emailQueries.push(
+            db.collection('orders').where('customerDetails.email', '==', profileEmail).get()
+          );
+        }
+
+        const emailSnapshots = await Promise.allSettled(emailQueries);
+        const allDocs = [...primaryDocs];
+        emailSnapshots.forEach(result => {
+          if (result.status === 'fulfilled') {
+            result.value.docs.forEach(doc => allDocs.push(doc));
+          }
+        });
+
+        mergeAndRender(allDocs);
+      }, error => {
+        console.error('[Firebase] Orders fetch error:', error.code, error.message);
+        // On permission error, try email-only fallback
+        if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
+          const fallbacks = [];
+          if (authEmail) {
+            fallbacks.push(db.collection('orders').where('customerDetails.email', '==', authEmail).get());
+            fallbacks.push(db.collection('orders').where('userEmail', '==', authEmail).get());
+          }
+          Promise.allSettled(fallbacks).then(results => {
+            const allDocs = [];
+            results.forEach(r => { if (r.status === 'fulfilled') r.value.docs.forEach(d => allDocs.push(d)); });
+            mergeAndRender(allDocs);
+          });
+        } else {
+          if (ordersList) {
+            ordersList.innerHTML = `<p class="empty-msg" style="color:#e74c3c;">⚠️ ${error.message || 'Failed to load orders.'}</p>`;
+          }
+        }
+      });
+    return unsubscribe;
   }
 
   function renderOrdersList(orders) {
