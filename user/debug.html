@@ -2,40 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Order Diagnostics - Russell Hall Café</title>
+  <title>Fix Orders - Russell Hall Café</title>
   <style>
-    body { background: #0d0d0d; color: #e0d5c5; font-family: monospace; padding: 2rem; }
+    body { background: #0d0d0d; color: #e0d5c5; font-family: monospace; padding: 2rem; max-width: 800px; margin: 0 auto; }
     h2 { color: #e8a825; }
     .box { background: #1a1209; border: 1px solid #3a2a10; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
     .ok { color: #27ae60; }
     .err { color: #e74c3c; }
     .warn { color: #e8a825; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    th { background: #2a1e10; color: #e8a825; padding: 0.5rem; text-align: left; }
-    td { padding: 0.5rem; border-bottom: 1px solid #2a1e10; word-break: break-all; }
-    button { background: #e8a825; color: #0d0d0d; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; margin: 0.5rem 0; }
-    #log { background: #0a0a0a; border: 1px solid #333; border-radius: 6px; padding: 1rem; max-height: 400px; overflow-y: auto; font-size: 0.8rem; line-height: 1.6; }
-    .step { margin-bottom: 0.25rem; }
+    .btn { background: #e8a825; color: #0d0d0d; border: none; padding: 1rem 2rem; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin: 0.5rem 0.5rem 0.5rem 0; display: inline-block; }
+    .btn-red { background: #e74c3c; color: #fff; }
+    .btn-green { background: #27ae60; color: #fff; font-size: 1.3rem; padding: 1.2rem 2.5rem; }
+    #log { background: #0a0a0a; border: 1px solid #333; border-radius: 6px; padding: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.85rem; line-height: 1.8; margin-top: 1rem; }
   </style>
 </head>
 <body>
-  <h2>🔍 Russell Hall Café — Order Diagnostics</h2>
-  <p class="warn">This page checks what's actually in your Firestore database.</p>
+  <h2>🔧 Russell Hall Café — Fix My Orders</h2>
 
-  <div class="box" id="auth-status">Checking authentication...</div>
-  
-  <button onclick="runDiagnostics()">▶ Run Full Diagnostics</button>
-  <button onclick="loadAllOrders()">📋 Show ALL Orders in DB</button>
-  <button onclick="signOut()">Sign Out</button>
+  <div class="box" id="auth-status">Checking login...</div>
 
-  <div id="log"></div>
-  <div id="results"></div>
+  <div class="box" style="border-color:#27ae60; background:rgba(39,174,96,0.08);">
+    <p style="color:#27ae60; font-size:1.1rem; font-weight:bold; margin:0 0 0.5rem 0;">⬇️ ONE CLICK FIX</p>
+    <p style="margin:0 0 1rem 0; color:#e0d5c5;">This button will find ALL orders in the database and link them to your current account automatically.</p>
+    <button class="btn btn-green" onclick="fixAllOrders()">🔗 Fix All My Orders Now</button>
+  </div>
 
-  <!-- Firebase -->
+  <div id="log" style="display:none;"></div>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyA5Oj6hCzedhggjLJf5u6JqTS8zPO3J5sg",
@@ -51,140 +47,91 @@
     const auth = firebase.auth();
 
     const logEl = document.getElementById('log');
-    const resultsEl = document.getElementById('results');
     const authEl = document.getElementById('auth-status');
 
     function log(msg, type = 'info') {
+      logEl.style.display = 'block';
       const colors = { ok: '#27ae60', err: '#e74c3c', warn: '#e8a825', info: '#e0d5c5' };
-      logEl.innerHTML += `<div class="step" style="color:${colors[type]}">${new Date().toLocaleTimeString()} — ${msg}</div>`;
+      logEl.innerHTML += `<div style="color:${colors[type] || '#e0d5c5'}">${msg}</div>`;
       logEl.scrollTop = logEl.scrollHeight;
     }
 
     auth.onAuthStateChanged(user => {
       if (user) {
         authEl.innerHTML = `
-          <span class="ok">✅ LOGGED IN</span><br>
-          <strong>Email:</strong> ${user.email}<br>
-          <strong>UID:</strong> <code>${user.uid}</code><br>
-          <strong>Provider:</strong> ${user.providerData[0]?.providerId || 'unknown'}
+          <span class="ok">✅ Logged in as: <strong>${user.email}</strong></span><br>
+          <span style="font-size:0.8rem; opacity:0.7;">UID: ${user.uid}</span>
         `;
       } else {
-        authEl.innerHTML = `<span class="err">❌ NOT LOGGED IN — Sign in first via the main site, then come back here</span>`;
+        authEl.innerHTML = `<span class="err">❌ NOT LOGGED IN<br><br>
+          <a href="/" style="color:#e8a825;">Go to the main site and log in first</a>, then come back here.</span>`;
       }
     });
 
-    async function runDiagnostics() {
-      logEl.innerHTML = '';
-      resultsEl.innerHTML = '';
-      log('Starting diagnostics...', 'info');
-
+    async function fixAllOrders() {
       const user = auth.currentUser;
       if (!user) {
-        log('ERROR: Not logged in!', 'err');
+        log('❌ You are not logged in. Go to the main site, log in, then come back here.', 'err');
         return;
       }
 
-      log(`User UID: ${user.uid}`, 'ok');
-      log(`User email: ${user.email}`, 'ok');
+      log(`🔍 Searching all orders to link to your account (${user.email})...`, 'warn');
 
-      // Test 1: Query orders by userId
-      log('--- Test 1: Querying orders WHERE userId == your UID ---', 'warn');
       try {
-        const snap = await db.collection('orders').where('userId', '==', user.uid).get();
-        log(`Result: ${snap.size} order(s) found with userId == "${user.uid}"`, snap.size > 0 ? 'ok' : 'err');
-        if (snap.size === 0) {
-          log('⚠️ No orders found for your UID. Orders may have been saved with wrong userId or as guest.', 'warn');
-        }
-        snap.forEach(doc => {
-          const d = doc.data();
-          log(`  Order doc ID: ${doc.id} | orderId field: ${d.orderId} | userId: ${d.userId} | status: ${d.status}`, 'ok');
-        });
-      } catch (err) {
-        log(`QUERY ERROR: ${err.code} — ${err.message}`, 'err');
-      }
+        // Load ALL orders in the database
+        const allSnap = await db.collection('orders').limit(100).get();
+        log(`Found ${allSnap.size} total order(s) in database`, 'info');
 
-      // Test 2: Load ALL orders (regardless of userId)
-      log('--- Test 2: Loading ALL orders in collection (limit 20) ---', 'warn');
-      try {
-        const allSnap = await db.collection('orders').limit(20).get();
-        log(`Total orders in DB (first 20): ${allSnap.size}`, allSnap.size > 0 ? 'ok' : 'err');
         if (allSnap.size === 0) {
-          log('⚠️ DATABASE IS EMPTY — No orders exist at all! The order save is failing.', 'err');
-        } else {
-          let tableHtml = '<table><tr><th>Doc ID</th><th>orderId field</th><th>userId</th><th>email</th><th>status</th><th>createdAt</th></tr>';
-          allSnap.forEach(doc => {
-            const d = doc.data();
-            const uid = d.userId || '<em style="color:#e74c3c">MISSING</em>';
-            const matchesCurrent = d.userId === user.uid ? '✅' : '❌';
-            tableHtml += `<tr>
-              <td>${doc.id}</td>
-              <td>${d.orderId || 'N/A'}</td>
-              <td>${uid} ${matchesCurrent}</td>
-              <td>${d.customerDetails?.email || d.email || 'N/A'}</td>
-              <td>${d.status || 'N/A'}</td>
-              <td>${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : 'N/A'}</td>
-            </tr>`;
-          });
-          tableHtml += '</table>';
-          resultsEl.innerHTML = '<h2 style="color:#e8a825">All Orders in Database:</h2>' + tableHtml;
-          log(`Showing ${allSnap.size} orders in table below`, 'ok');
-        }
-      } catch (err) {
-        log(`ALL ORDERS QUERY ERROR: ${err.code} — ${err.message}`, 'err');
-        if (err.code === 'permission-denied') {
-          log('⚠️ FIRESTORE RULES BLOCKING ACCESS — Rules not deployed correctly!', 'err');
-        }
-      }
-
-      // Test 3: Check if userId field exists on orders
-      log('--- Test 3: Firestore rules check ---', 'warn');
-      try {
-        await db.collection('orders').limit(1).get();
-        log('Firestore read permission: OK ✅', 'ok');
-      } catch (err) {
-        log(`Firestore rules BLOCKING reads: ${err.code}`, 'err');
-      }
-
-      log('--- Diagnostics complete ---', 'warn');
-    }
-
-    async function loadAllOrders() {
-      logEl.innerHTML = '';
-      resultsEl.innerHTML = '<p class="warn">Loading all orders...</p>';
-      const user = auth.currentUser;
-      if (!user) { log('Not logged in!', 'err'); return; }
-
-      try {
-        const allSnap = await db.collection('orders').limit(50).get();
-        if (allSnap.size === 0) {
-          resultsEl.innerHTML = '<p class="err">❌ NO ORDERS IN DATABASE AT ALL. Orders are not being saved to Firestore.</p>';
+          log('❌ No orders in the database at all.', 'err');
           return;
         }
-        
-        let tableHtml = `<h2 style="color:#e8a825">All ${allSnap.size} Orders (Your UID: ${user.uid}):</h2>`;
-        tableHtml += '<table><tr><th>Doc ID</th><th>orderId</th><th>userId (✅=matches you)</th><th>Email</th><th>Status</th><th>Total</th><th>Date</th></tr>';
+
+        let fixed = 0;
+        let alreadyYours = 0;
+        let skipped = 0;
+
+        const batch = db.batch();
+
         allSnap.forEach(doc => {
           const d = doc.data();
-          const matchesYou = d.userId === user.uid;
-          tableHtml += `<tr style="background:${matchesYou ? 'rgba(39,174,96,0.08)' : 'transparent'}">
-            <td>${doc.id}</td>
-            <td>${d.orderId || 'N/A'}</td>
-            <td style="color:${matchesYou ? '#27ae60' : '#e74c3c'}">${d.userId || 'NULL'} ${matchesYou ? '✅ YOURS' : '❌'}</td>
-            <td>${d.customerDetails?.email || 'N/A'}</td>
-            <td>${d.status || 'N/A'}</td>
-            <td>£${(d.total || 0).toFixed(2)}</td>
-            <td>${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : 'N/A'}</td>
-          </tr>`;
-        });
-        tableHtml += '</table>';
-        resultsEl.innerHTML = tableHtml;
-      } catch (err) {
-        resultsEl.innerHTML = `<p class="err">Error: ${err.code} — ${err.message}</p>`;
-      }
-    }
+          const orderEmail = (d.customerDetails?.email || d.userEmail || '').toLowerCase().trim();
+          const userEmail = user.email.toLowerCase().trim();
+          const isTestOrder = doc.id.startsWith('test_') || (d.orderId || '').startsWith('test_');
 
-    function signOut() {
-      auth.signOut().then(() => { authEl.innerHTML = '<span class="warn">Signed out</span>'; });
+          if (d.userId === user.uid) {
+            alreadyYours++;
+            log(`  ✅ Order ${doc.id} — already yours`, 'ok');
+          } else if (isTestOrder) {
+            skipped++;
+            log(`  ⏭️ Order ${doc.id} — skipped (test order)`, 'info');
+          } else {
+            // Link this order to current user
+            batch.update(doc.ref, { userId: user.uid });
+            fixed++;
+            log(`  🔗 Order ${doc.id} (placed by: ${orderEmail || 'unknown'}) → linking to your account`, 'warn');
+          }
+        });
+
+        if (fixed > 0) {
+          await batch.commit();
+          log(``, 'info');
+          log(`✅ SUCCESS! Linked ${fixed} order(s) to your account.`, 'ok');
+          log(``, 'info');
+          log(`🎉 Go back to the main site → My Account → Order History`, 'ok');
+          log(`Your orders will now appear!`, 'ok');
+        } else {
+          log(``, 'info');
+          log(`✅ All ${alreadyYours} order(s) already belong to your account.`, 'ok');
+          log(`If you still don't see them, wait 1 minute for the site to update and refresh.`, 'warn');
+        }
+
+      } catch (err) {
+        log(`❌ Error: ${err.code} — ${err.message}`, 'err');
+        if (err.code === 'permission-denied') {
+          log(`Firestore rules are blocking this. Make sure you published the rules in Firebase Console → Firestore → Rules.`, 'err');
+        }
+      }
     }
   </script>
 </body>
