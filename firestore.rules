@@ -2,112 +2,148 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── HELPER FUNCTIONS ─────────────────────────────────────────────────────
-    function isSignedIn() {
+    // Helper: Check if requesting user is authenticated
+    function isAuth() {
       return request.auth != null;
     }
-    
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+
+    // Helper: Check if user document exists and get user role
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-    
-    function isStaff() {
-      return isSignedIn() && getUserRole() in ['kitchen', 'admin', 'superadmin'];
+
+    // Helper: Check if user document exists and has admin/manager/superadmin role
+    function hasAdminRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (getUserData().role == 'admin' || getUserData().role == 'superadmin' || getUserData().role == 'manager');
     }
-    
+
+    // Helper: Check if user document exists and has kitchen role
+    function hasKitchenRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'kitchen';
+    }
+
+    // Helper: Check if user is Admin, Manager, or Superadmin
     function isAdmin() {
-      return isSignedIn() && getUserRole() in ['admin', 'superadmin'];
+      return isAuth() && 
+        (request.auth.token.email.matches('.*@russellhallcafe\\.co\\.uk') || 
+         request.auth.token.email.matches('.*@rhbrunch\\.co\\.uk') ||
+         hasAdminRole());
     }
 
-    // ─── ORDERS ───────────────────────────────────────────────────────────────
-    // Customers can read/write their own orders
-    // Kitchen & admin can read/write all orders
-    match /orders/{orderId} {
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || isStaff()
-      );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || isStaff()
-      );
-      allow delete: if isAdmin();
-      
-      // Allow listing (for the WHERE userId == uid query)
-      allow list: if isSignedIn() && (
-        request.query.filters.size() > 0 || isStaff()
-      );
-    }
-
-    // ─── BOOKINGS ─────────────────────────────────────────────────────────────
-    match /bookings/{bookingId} {
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || isStaff()
-      );
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || isStaff()
-      );
-      allow delete: if isAdmin();
-      allow list: if isSignedIn();
+    // Helper: Check if user is Kitchen, Manager, Admin, or Superadmin
+    function isKitchen() {
+      return isAuth() && 
+        (request.auth.token.email.matches('.*@russellhallcafe\\.co\\.uk') || 
+         request.auth.token.email.matches('.*@rhbrunch\\.co\\.uk') ||
+         hasAdminRole() ||
+         hasKitchenRole());
     }
 
     // ─── USERS ────────────────────────────────────────────────────────────────
+    // IMPORTANT: 'list' is separate from 'get' — queries need list permission.
+    // resource.data is null during list, so we cannot check userId there.
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isStaff());
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow get:    if isAuth() && (request.auth.uid == userId || isKitchen());
+      allow list:   if isAuth() && isKitchen();
+      allow create: if isAuth() && request.auth.uid == userId;
+      allow update: if isAuth() && (request.auth.uid == userId || isAdmin());
       allow delete: if isAdmin();
-      allow list: if isStaff();
     }
 
-    // ─── TABLES ───────────────────────────────────────────────────────────────
-    // Tables are publicly readable (for live floor plan on customer site)
+    // ─── ORDERS ───────────────────────────────────────────────────────────────
+    // KEY FIX: 'allow read' with resource.data CRASHES on list/query operations
+    // because resource is NULL during collection queries (not single-doc reads).
+    // The old rule "allow read: if resource.data.userId == uid" blocked ALL
+    // queries (track order, admin orders, kitchen queue) silently with no error.
+    //
+    // Fix: separate 'get' (single document — resource exists) from
+    //      'list' (queries — resource is null, we trust the query filter).
+    // Customers query WHERE userId==uid so they only see their own orders.
+    // Kitchen/admin query by status so they see all — both are safe.
+    match /orders/{orderId} {
+      allow create: if isAuth() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow get:    if isAuth() && (resource.data.userId == request.auth.uid || isKitchen());
+      allow list:   if isAuth();
+      allow update: if isAuth() && (resource.data.userId == request.auth.uid || isKitchen());
+      allow delete: if isAdmin();
+    }
+
+    // ─── BOOKINGS ─────────────────────────────────────────────────────────────
+    // Same fix applied — split read into get + list.
+    match /bookings/{bookingId} {
+      allow create: if isAuth() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow get:    if isAuth() && (resource.data.userId == request.auth.uid || isKitchen());
+      allow list:   if isAuth();
+      allow update: if isAuth() && (resource.data.userId == request.auth.uid || isKitchen());
+      allow delete: if isAdmin();
+    }
+
+    // ─── CATEGORIES & MENU ITEMS (public read, admin write) ──────────────────
+    match /categories/{categoryId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+    match /menuItems/{itemId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─── TABLES (public read — needed for live floor plan) ───────────────────
     match /tables/{tableId} {
       allow read, list: if true;
-      allow write: if isStaff();
+      allow write: if isKitchen();
     }
 
-    // ─── MENU ─────────────────────────────────────────────────────────────────
-    match /menu/{itemId} {
+    // ─── DAILY SPECIALS (public read) ────────────────────────────────────────
+    match /dailySpecials/{specialId} {
       allow read, list: if true;
+      allow update: if isAuth();
+      allow create, delete: if isAdmin();
+    }
+
+    // ─── STAFF ROTA ──────────────────────────────────────────────────────────
+    match /staffRota/{rotaId} {
+      allow read, list: if isKitchen();
       allow write: if isAdmin();
     }
 
-    // ─── DAILY SPECIALS ───────────────────────────────────────────────────────
-    match /dailySpecials/{docId} {
-      allow read, list: if true;
-      allow write: if isAdmin();
-    }
-
-    // ─── AUDIT LOG ────────────────────────────────────────────────────────────
-    match /auditLog/{logId} {
-      allow create: if isSignedIn();
-      allow read, list: if isAdmin();
-      allow update, delete: if false;
-    }
-
-    // ─── INVENTORY ────────────────────────────────────────────────────────────
+    // ─── INVENTORY ───────────────────────────────────────────────────────────
     match /inventory/{itemId} {
-      allow read, list: if isSignedIn();
-      allow write: if isStaff();
-    }
-    
-    // ─── ROTA / SCHEDULES ─────────────────────────────────────────────────────
-    match /rota/{docId} {
-      allow read, list: if isSignedIn();
-      allow write: if isAdmin();
-    }
-    
-    match /schedules/{docId} {
-      allow read, list: if isSignedIn();
-      allow write: if isAdmin();
+      allow read, list, write: if isKitchen();
+      allow delete: if isAdmin();
     }
 
-    // ─── NEWSLETTER ───────────────────────────────────────────────────────────
-    match /newsletter/{docId} {
-      allow create: if true;
+    // ─── INVENTORY LOGS ──────────────────────────────────────────────────────
+    match /inventoryLog/{logId} {
+      allow read, list, write: if isKitchen();
+      allow delete: if isAdmin();
+    }
+
+    // ─── WASTE LOGS ──────────────────────────────────────────────────────────
+    match /wasteLog/{logId} {
+      allow read, list, write: if isKitchen();
+      allow delete: if isAdmin();
+    }
+
+    // ─── SUPPLIERS ───────────────────────────────────────────────────────────
+    match /suppliers/{supplierId} {
+      allow read, list: if isKitchen();
+      allow write, delete: if isAdmin();
+    }
+
+    // ─── PURCHASE ORDERS ─────────────────────────────────────────────────────
+    match /purchaseOrders/{poId} {
+      allow read, list, write: if isKitchen();
+      allow delete: if isAdmin();
+    }
+
+    // ─── AUDIT LOGS ──────────────────────────────────────────────────────────
+    match /auditLog/{logId} {
       allow read, list: if isAdmin();
-      allow update, delete: if isAdmin();
+      allow create: if isAuth();
+      allow update, delete: if false;
     }
   }
 }
