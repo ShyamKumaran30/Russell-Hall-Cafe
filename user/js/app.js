@@ -2970,7 +2970,19 @@
           }
         }
       }, error => {
-        console.error('Orders fetch error:', error);
+        console.error('[Firebase] Orders fetch error:', error.code, error.message);
+        const ordersList = $('#orders-history-list');
+        if (ordersList) {
+          let msg = 'Failed to load orders.';
+          if (error.code === 'permission-denied') {
+            msg = '⚠️ Access denied — Firestore security rules need updating. Contact support.';
+          } else if (error.code === 'failed-precondition') {
+            msg = '⚠️ Database index required. Check browser console for a link to create it, or contact support.';
+          } else {
+            msg = '⚠️ ' + (error.message || 'Unknown error loading orders.');
+          }
+          ordersList.innerHTML = `<p class="empty-msg" style="color:#e74c3c;">${msg}</p>`;
+        }
       });
   }
 

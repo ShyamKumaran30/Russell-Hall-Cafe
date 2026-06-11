@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Disallow admin pages and APIs
+Disallow: /admin.html
+Disallow: /kitchen.html
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: http://localhost:3001/sitemap.xml

@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RH Brunch | Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Oswald:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=3.0.1">
+  <!-- jsPDF Library CDN for Sales Reports PDF exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Chart.js CDN for visual reports -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: #0d0d0d;
+      color: #f5ead6;
+      font-family: 'Lora', Georgia, serif;
+    }
+    
+    .admin-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(201, 148, 58, 0.3);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .admin-header h1 {
+      font-family: 'Playfair Display', serif;
+      color: #e8a825;
+      font-size: 2.2rem;
+    }
+
+    .admin-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .admin-tab-btn {
+      background: none;
+      border: 1px solid rgba(201, 148, 58, 0.3);
+      color: #f5ead6;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-family: 'Oswald', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .admin-tab-btn.active, .admin-tab-btn:hover {
+      background: #e8a825;
+      color: #0d0d0d;
+      border-color: #e8a825;
+      box-shadow: 0 0 15px rgba(232, 168, 37, 0.3);
+    }
+
+    .admin-panel {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .admin-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Access Denied / Auth Section */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: #0d0d0d;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .auth-box {
+      background: rgba(26, 18, 9, 0.88);
+      border: 1px solid #e8a825;
+      border-radius: 16px;
+      padding: 3rem;
+      max-width: 450px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    .auth-box h2 {
+      font-family: 'Playfair Display', serif;
+      color: #e8a825;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Orders Card & Grid */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .admin-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .admin-card {
+      background: rgba(26, 18, 9, 0.55);
+      border: 1px solid rgba(201, 148, 58, 0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .admin-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed rgba(201, 148, 58, 0.2);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .admin-card-header h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.25rem;
+      color: #e8a825;
+    }
+
+    .admin-card-body p {
+      font-size: 0.9rem;
+      margin-bottom: 0.4rem;
+      line-height: 1.5;
+    }
+
+    .admin-card-footer {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(201, 148, 58, 0.2);
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    /* Forms */
+    .admin-input, .admin-select {
+      background: #1a1209;
+      border: 1px solid rgba(201, 148, 58, 0.4);
+      color: #f5ead6;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+    }
+
+    .admin-select {
+      cursor: pointer;
+    }
+
+    /* Analytics Dashboard */
+    .analytics-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, rgba(26, 18, 9, 0.88), rgba(13, 13, 13, 0.95));
+      border: 1px solid rgba(201, 148, 58, 0.3);
+      border-radius: 12px;
+      padding: 1.75rem;
+      text-align: center;
+    }
+
+    .stat-box h4 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-box .number {
+      font-family: 'Oswald', sans-serif;
+      font-size: 2.2rem;
+      color: #e8a825;
+      font-weight: 600;
+    }
+
+    .analytics-sections {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 992px) {
+      .analytics-sections {
+        grid-template-columns: 2fr 1fr;
+      }
+    }
+
+    .analytics-card {
+      background: rgba(26, 18, 9, 0.55);
+      border: 1px solid rgba(201, 148, 58, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+    }
+
+    .analytics-card h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(201, 148, 58, 0.2);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+      color: #e8a825;
+    }
+
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(245, 234, 214, 0.05);
+      font-size: 0.92rem;
+    }
+
+    .list-row:last-child {
+      border-bottom: none;
+    }
+
+    .progress-bar-wrap {
+      background: rgba(255, 255, 255, 0.05);
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 0.4rem;
+      width: 100%;
+    }
+
+    .progress-bar {
+      background: #e8a825;
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .back-btn {
+      text-decoration: none;
+      color: #e8a825;
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body style="visibility: hidden;">
+
+  <!-- Loading Screen -->
+  <div id="admin-loading" style="position:fixed; inset:0; background:#0d0d0d; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#e8a825;">
+    <div style="font-family:'Oswald', sans-serif; font-size:1.5rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem; animation:pulse 1.5s infinite;">Verifying Admin Session...</div>
+    <div style="width:40px; height:40px; border:3px solid rgba(232, 168, 37, 0.1); border-top:3px solid #e8a825; border-radius:50%; animation:spin 1s linear infinite;"></div>
+  </div>
+
+  <!-- Access Denied Screen / Login -->
+  <div id="access-denied-screen" style="position:fixed; inset:0; background:#0d0d0d; z-index:9998; display:none; align-items:center; justify-content:center; padding:2rem; text-align:center;">
+    <div class="auth-box">
+      <img src="images/logo.png" alt="Russell Hall Café Logo" style="height: 70px; width: auto; margin: 0 auto 1.25rem; display: block; object-fit: contain; filter: drop-shadow(0 0 8px rgba(232, 168, 37, 0.2));">
+      <h2>Access Denied</h2>
+      <p id="denied-message" style="margin-bottom: 2rem; opacity: 0.8; line-height: 1.6;">This page is secure. Please log in with an Administrator account to access the dashboard.</p>
+      
+      <!-- Quick Admin Login Form -->
+      <form id="admin-login-form">
+        <div style="text-align: left; margin-bottom: 1rem;">
+          <label style="font-family:'Oswald', sans-serif; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em; display:block; margin-bottom:0.4rem;">Admin Email</label>
+          <input type="email" id="admin-email-input" required placeholder="admin@cafe.com" style="width: 100%; box-sizing:border-box; background: #1a1209; border: 1px solid rgba(201, 148, 58, 0.4); color: #f5ead6; padding: 0.6rem; border-radius: 6px;">
+        </div>
+        <div style="text-align: left; margin-bottom: 1rem;">
+          <label style="font-family:'Oswald', sans-serif; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em; display:block; margin-bottom:0.4rem;">Password</label>
+          <input type="password" id="admin-password-input" required placeholder="••••••••" style="width: 100%; box-sizing:border-box; background: #1a1209; border: 1px solid rgba(201, 148, 58, 0.4); color: #f5ead6; padding: 0.6rem; border-radius: 6px;">
+        </div>
+        <button type="submit" id="login-btn" class="btn btn-gold" style="width: 100%; margin-top: 1.5rem; cursor:pointer;">Authenticate</button>
+        <p id="login-error" style="color: var(--error-red); margin-top: 0.75rem; font-size: 0.85rem; font-weight:bold; display:none;"></p>
+      </form>
+      <a href="index.html" class="back-btn" style="margin-top: 1.5rem; display:inline-block;">← Back to Main Website</a>
+    </div>
+  </div>
+
+  <div id="admin-content" style="display: none;">
+    <div class="admin-container">
+    <header class="admin-header">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <a href="index.html" class="back-btn" style="margin-right: 0.5rem;">← Back to Site</a>
+        <img src="images/logo.png" alt="Russell Hall Café Logo" style="height: 48px; width: auto; object-fit: contain; filter: drop-shadow(0 0 4px rgba(232, 168, 37, 0.3));">
+        <h1 style="margin: 0; font-size: 1.6rem;">RH Brunch Admin Portal</h1>
+      </div>
+      <div style="text-align: right;">
+        <p style="font-size: 0.88rem; opacity: 0.85; margin: 0;">Welcome, <strong id="admin-profile-name">Admin</strong></p>
+        <span id="session-timeout-indicator" style="font-size:0.75rem; opacity:0.6; display:block; margin:0.25rem 0;">Session active</span>
+        <button class="btn btn-outline" id="admin-logout-btn" style="padding: 0.4rem 0.9rem; font-size: 0.8rem; margin-top: 0.2rem;">Log Out</button>
+      </div>
+    </header>
+
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" data-panel="orders">Active Orders</button>
+      <button class="admin-tab-btn" data-panel="floor-plan">Live Table Update</button>
+      <button class="admin-tab-btn" data-panel="inventory">Stock Management</button>
+      <button class="admin-tab-btn" data-panel="staff">Staff Management</button>
+      <button class="admin-tab-btn" data-panel="analytics">Sales & Reports</button>
+      
+      <!-- Hidden buttons to prevent JS initialization errors -->
+      <button class="admin-tab-btn" data-panel="bookings">Reservations</button>
+      <button class="admin-tab-btn" data-panel="menu">Menu Customizer</button>
+      <button class="admin-tab-btn" data-panel="rota" style="display:none !important;">Weekly Rota</button>
+      <button class="admin-tab-btn" data-panel="suppliers" style="display:none !important;">Suppliers & POs</button>
+      <button class="admin-tab-btn" data-panel="audit-logs" id="tab-audit-logs" style="display:none !important;">Audit Logs</button>
+    </div>
+
+    <!-- ACTIVE ORDERS PANEL -->
+    <main class="admin-panel active" id="panel-orders">
+      <div class="admin-grid" id="active-orders-grid">
+        <p class="empty-msg" style="grid-column: 1/-1;">Loading active orders...</p>
+      </div>
+    </main>
+
+    <!-- RESERVATIONS PANEL -->
+    <main class="admin-panel" id="panel-bookings">
+      <div class="admin-grid" id="reservations-grid">
+        <p class="empty-msg" style="grid-column: 1/-1;">Loading table reservations...</p>
+      </div>
+    </main>
+
+    <!-- FLOOR PLAN PANEL -->
+    <main class="admin-panel" id="panel-floor-plan">
+      <div class="admin-tables-layout" style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: start;">
+        <!-- Left side: Interactive SVG floor plan -->
+        <div class="analytics-card" style="flex: 1 1 450px; min-width: 320px;">
+          <h3>Interactive Floor Plan</h3>
+          <div id="admin-floor-map" style="margin-top: 1rem; width: 100%; height: auto;"></div>
+        </div>
+        <!-- Right side: Status management cards -->
+        <div class="analytics-card" style="flex: 1 1 450px; min-width: 320px;">
+          <h3>Live Table Controls</h3>
+          <div id="admin-tables-container" style="margin-top: 1rem;"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- MENU CUSTOMIZER PANEL -->
+    <main class="admin-panel" id="panel-menu">
+      <div class="admin-grid" style="grid-template-columns: 1fr 1.5fr; gap: 2rem;">
+        
+        <!-- Forms section -->
+        <div style="display:flex; flex-direction:column; gap:2rem;">
+          <!-- Daily Special Form -->
+          <div class="analytics-card">
+            <h3>Publish Daily Special</h3>
+            <form id="daily-special-form" style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Special Name</label>
+                <input type="text" id="special-name-input" class="admin-input" required placeholder="e.g. Lobster Benedict" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Description</label>
+                <textarea id="special-desc-input" class="admin-input" rows="2" placeholder="e.g. Fresh local lobster poached eggs..." style="width:100%; box-sizing:border-box; font-family:inherit; resize:vertical;"></textarea>
+              </div>
+              <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Special Price (£)</label>
+                  <input type="number" step="0.01" id="special-price-input" class="admin-input" required placeholder="e.g. 12.99" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Quantity</label>
+                  <input type="number" id="special-qty-input" class="admin-input" required placeholder="e.g. 15" style="width:100%; box-sizing:border-box;">
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Image URL</label>
+                <input type="text" id="special-image-input" class="admin-input" placeholder="e.g. images/menu/lobster.jpg" style="width:100%; box-sizing:border-box;">
+              </div>
+              <button class="btn btn-gold" type="submit" style="width:100%; padding:0.6rem; font-family:'Oswald', sans-serif; font-size:0.9rem; margin-top:0.5rem; cursor:pointer;">Publish Special</button>
+            </form>
+          </div>
+
+          <!-- Add Category Form -->
+          <div class="analytics-card">
+            <h3>Add Menu Category</h3>
+            <form id="customizer-add-cat-form" style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Category ID</label>
+                <input type="text" id="cat-id-input" class="admin-input" required placeholder="e.g. burgers" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Display Title</label>
+                <input type="text" id="cat-title-input" class="admin-input" required placeholder="e.g. Gourmet Burgers" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Icon Emoji</label>
+                <input type="text" id="cat-icon-input" class="admin-input" placeholder="e.g. 🍔" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Subtitle</label>
+                <input type="text" id="cat-subtitle-input" class="admin-input" placeholder="e.g. Flame grilled to perfection" style="width:100%; box-sizing:border-box;">
+              </div>
+              <button class="btn btn-gold" type="submit" style="width:100%; padding:0.6rem; font-family:'Oswald', sans-serif; font-size:0.9rem; margin-top:0.5rem; cursor:pointer;">Add Category</button>
+              <p id="cat-feedback-msg" style="font-size:0.82rem; font-weight:bold; margin:0; text-align:center;"></p>
+            </form>
+          </div>
+
+          <!-- Add Product Form -->
+          <div class="analytics-card">
+            <h3>Launch New Menu Item</h3>
+            <form id="customizer-add-item-form" style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Item ID</label>
+                <input type="text" id="item-id-input" class="admin-input" required placeholder="e.g. bu5" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Item Name</label>
+                <input type="text" id="item-name-input" class="admin-input" required placeholder="e.g. Spicy Chicken Burger" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Description</label>
+                <textarea id="item-desc-input" class="admin-input" rows="2" placeholder="e.g. Premium breaded fillet with..." style="width:100%; box-sizing:border-box; font-family:inherit; resize:vertical;"></textarea>
+              </div>
+              <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Base Price (£)</label>
+                  <input type="number" step="0.01" id="item-price-input" class="admin-input" required placeholder="e.g. 5.99" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Category</label>
+                  <select id="item-cat-select" class="admin-select" style="width:100%; box-sizing:border-box; padding:0.45rem;"></select>
+                </div>
+              </div>
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="checkbox" id="item-veg-checkbox" style="cursor:pointer;">
+                <label for="item-veg-checkbox" style="font-size:0.85rem; cursor:pointer;">Vegetarian (v)</label>
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Image URL</label>
+                <input type="text" id="item-image-input" class="admin-input" placeholder="e.g. images/menu/spicy-chicken.jpg" style="width:100%; box-sizing:border-box;">
+              </div>
+              <button class="btn btn-gold" type="submit" style="width:100%; padding:0.6rem; font-family:'Oswald', sans-serif; font-size:0.9rem; margin-top:0.5rem; cursor:pointer;">Launch Item</button>
+              <p id="item-feedback-msg" style="font-size:0.82rem; font-weight:bold; margin:0; text-align:center;"></p>
+            </form>
+          </div>
+        </div>
+
+        <!-- Menu items rendering -->
+        <div id="customizer-menu-list" style="display:flex; flex-direction:column; gap:1.5rem; flex:1;">
+          <p style="opacity:0.5;">Loading menu customizer database...</p>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- PRODUCT SIZES EDITOR MODAL -->
+    <div class="kitchen-modal-overlay" id="customizer-size-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9000; display:none; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+      <div class="kitchen-modal" style="background:#121212; border:1px solid #e8a825; border-radius:12px; max-width:480px; width:90%; padding:2rem; box-shadow:0 10px 40px rgba(0,0,0,0.8);">
+        <h3 id="size-modal-title" style="font-family:'Playfair Display',serif; color:#e8a825; margin-top:0; font-size:1.4rem; border-bottom:1px dashed rgba(201,148,58,0.3); padding-bottom:0.5rem; margin-bottom:1.25rem;">Manage Sizes</h3>
+        <p style="font-size:0.82rem; opacity:0.7; margin-top:-0.5rem; margin-bottom:1rem;">Add product sizes and specify their direct prices. Leave list empty to use base price.</p>
+        
+        <div id="size-modal-rows" style="max-height:220px; overflow-y:auto; margin-bottom:1.5rem; padding-right:0.25rem;">
+          <!-- Size rows append here -->
+        </div>
+
+        <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+          <button class="btn btn-outline" onclick="addSizeEditorRow()" style="flex:1; padding:0.6rem; font-size:0.85rem;">+ Add Size</button>
+          <button class="btn btn-gold" onclick="saveCustomizerSizes()" style="flex:1; padding:0.6rem; font-size:0.85rem;">Save Changes</button>
+        </div>
+        <button class="btn btn-outline" onclick="closeCustomizerSizeModal()" style="width:100%; margin-top:0.5rem; padding:0.6rem; font-size:0.85rem; border-color:var(--error-red); color:var(--error-red);">Cancel</button>
+      </div>
+    </div>
+
+    <!-- WEEKLY ROTA PANEL -->
+    <main class="admin-panel" id="panel-rota">
+      <div class="analytics-card" style="margin-bottom: 2rem;">
+        <h3 style="border-bottom: 1px dashed rgba(201,148,58,0.3); padding-bottom:0.5rem;">Weekly Staff Rota</h3>
+        <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1.5rem; line-height: 1.4;">
+          Schedule working shifts for your chefs and administrators. Type shift hours (e.g. `08:00 - 16:00` or `Off`) for each staff member.
+        </p>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button class="btn btn-outline" id="rota-prev-week-btn" style="padding:0.4rem 0.8rem; font-size:0.85rem;">&larr; Prev Week</button>
+            <strong id="rota-week-display" style="font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:0.03em; font-size:0.95rem; color:#e8a825; margin:0 0.5rem;">Week starts: --</strong>
+            <button class="btn btn-outline" id="rota-next-week-btn" style="padding:0.4rem 0.8rem; font-size:0.85rem;">Next Week &rarr;</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span id="rota-feedback-msg" style="font-size:0.85rem; font-weight:bold;"></span>
+            <button class="btn btn-gold" id="rota-save-btn" style="padding:0.5rem 1.25rem;">Save Weekly Rota</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.88rem;">
+            <thead>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#e8a825;">
+                <th style="padding:0.5rem; width:15%;">Staff Name</th>
+                <th style="padding:0.5rem; width:10%;">Role</th>
+                <th style="padding:0.5rem; text-align:center;">Mon</th>
+                <th style="padding:0.5rem; text-align:center;">Tue</th>
+                <th style="padding:0.5rem; text-align:center;">Wed</th>
+                <th style="padding:0.5rem; text-align:center;">Thu</th>
+                <th style="padding:0.5rem; text-align:center;">Fri</th>
+                <th style="padding:0.5rem; text-align:center;">Sat</th>
+                <th style="padding:0.5rem; text-align:center;">Sun</th>
+              </tr>
+            </thead>
+            <tbody id="rota-table-body">
+              <tr>
+                <td colspan="9" style="text-align:center; opacity:0.5; padding:2rem 0;">Loading weekly shift tables...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- ANALYTICS PANEL -->
+    <main class="admin-panel" id="panel-analytics">
+      <div class="analytics-stats">
+        <div class="stat-box">
+          <h4>Daily Sales</h4>
+          <div class="number" id="stat-daily-sales">£0.00</div>
+          <div style="font-size:0.8rem; opacity:0.7; margin-top:0.25rem;" id="stat-daily-count">0 orders today</div>
+        </div>
+        <div class="stat-box">
+          <h4>Monthly Sales</h4>
+          <div class="number" id="stat-monthly-sales">£0.00</div>
+          <div style="font-size:0.8rem; opacity:0.7; margin-top:0.25rem;" id="stat-monthly-count">0 orders this month</div>
+        </div>
+        <div class="stat-box">
+          <h4>Annual Sales</h4>
+          <div class="number" id="stat-yearly-sales">£0.00</div>
+          <div style="font-size:0.8rem; opacity:0.7; margin-top:0.25rem;" id="stat-yearly-count">0 orders this year</div>
+        </div>
+        <div class="stat-box" style="display:none;">
+          <h4>Orders Completed</h4>
+          <div class="number" id="stat-orders-count">0</div>
+          <div style="font-size:0.8rem; opacity:0.7; margin-top:0.25rem;">total count</div>
+        </div>
+      </div>
+
+      <!-- Sales Report Exporter & Order History Date Filter -->
+      <div class="analytics-card" style="margin-bottom: 2rem;">
+        <h3 style="border-bottom: 1px dashed rgba(201,148,58,0.3); padding-bottom:0.5rem; margin-bottom: 1rem;">Order History & Reports by Date</h3>
+        <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+          <div style="display: flex; flex-direction: column; flex: 1; min-width: 150px;">
+            <label style="font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.25rem; font-weight: 600; opacity: 0.8;">Start Date</label>
+            <input type="date" id="report-start-date" class="admin-input" style="width: 100%; box-sizing: border-box;">
+          </div>
+          <div style="display: flex; flex-direction: column; flex: 1; min-width: 150px;">
+            <label style="font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.25rem; font-weight: 600; opacity: 0.8;">End Date</label>
+            <input type="date" id="report-end-date" class="admin-input" style="width: 100%; box-sizing: border-box;">
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-gold" onclick="triggerPDFReportExport()" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; font-family: 'Oswald', sans-serif; cursor:pointer;">Export PDF</button>
+            <button class="btn btn-outline" onclick="triggerCSVReportExport()" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; font-family: 'Oswald', sans-serif; cursor:pointer;">Export CSV</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart.js Visualization Grid (Hidden to simplify analytics) -->
+      <div class="admin-grid" style="display: none !important; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;" id="analytics-charts-container">
+        <!-- Stock Value Chart -->
+        <div class="analytics-card" style="height: 350px;">
+          <h3>Stock Value by Category</h3>
+          <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="chart-stock-value"></canvas>
+          </div>
+        </div>
+        <!-- Waste Cost Chart -->
+        <div class="analytics-card" style="height: 350px;">
+          <h3>Waste Cost by Ingredient</h3>
+          <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="chart-waste-cost"></canvas>
+          </div>
+        </div>
+        <!-- Sales Performance Chart -->
+        <div class="analytics-card" style="height: 350px; grid-column: 1 / -1;">
+          <h3>Daily Sales Performance (Gross Turnover)</h3>
+          <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="chart-sales-turnover"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-sections" style="grid-template-columns: 1fr;">
+        <!-- Completed Orders list -->
+        <div class="analytics-card" style="grid-column: 1 / -1;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(201,148,58,0.3); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <h3>Completed Orders Log</h3>
+            <button class="btn btn-outline" id="clear-date-filter-btn" style="padding: 0.25rem 0.5rem; font-size: 0.72rem; cursor: pointer; display: none;">Clear Date Filter</button>
+          </div>
+          <div id="completed-orders-log" style="max-height: 500px; overflow-y: auto;">
+            <p class="empty-msg">No completed sales yet.</p>
+          </div>
+        </div>
+        
+        <!-- Highest Sellers (Hidden) -->
+        <div class="analytics-card" style="display: none !important;">
+          <h3>Top-Selling Products</h3>
+          <div id="top-sellers-list">
+            <p class="empty-msg">No sales data recorded.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- STAFF MANAGEMENT PANEL -->
+    <main class="admin-panel" id="panel-staff">
+      <div class="analytics-stats" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 2rem;">
+        <div class="stat-box">
+          <h4>Staff On Shift</h4>
+          <div class="number" id="stat-working-staff">0</div>
+        </div>
+        <div class="stat-box">
+          <h4>Total Staff Accounts</h4>
+          <div class="number" id="stat-total-staff">0</div>
+        </div>
+      </div>
+
+      <div class="admin-grid" style="grid-template-columns: 1fr 1.5fr; gap: 2rem;">
+        <!-- Left Column Forms -->
+        <div style="display:flex; flex-direction:column; gap:2rem; height:fit-content;">
+          <!-- Create Staff section -->
+          <div class="analytics-card" style="height: fit-content;">
+            <h3>Create Staff Account</h3>
+            <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1.25rem; line-height: 1.4;">
+              Directly register and configure a new staff account (Chef/Admin) without logging out.
+            </p>
+            <form id="create-staff-form" style="display:flex; flex-direction:column; gap: 0.75rem;">
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Full Name</label>
+                <input type="text" id="create-staff-name" class="admin-input" required placeholder="Chef John" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Email Address</label>
+                <input type="email" id="create-staff-email" class="admin-input" required placeholder="chef@russellhallcafe.co.uk" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Password</label>
+                <input type="password" id="create-staff-password" class="admin-input" required placeholder="••••••••" style="width:100%; box-sizing:border-box;" minlength="8">
+              </div>
+              <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Hourly Rate (£)</label>
+                  <input type="number" step="0.01" id="create-staff-hourly" class="admin-input" placeholder="e.g. 11.50" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Phone</label>
+                  <input type="text" id="create-staff-phone" class="admin-input" placeholder="e.g. +447700900077" style="width:100%; box-sizing:border-box;">
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Role</label>
+                <select id="create-staff-role" class="admin-select" style="width:100%; box-sizing:border-box;">
+                  <option value="kitchen">Kitchen Staff / Chef</option>
+                  <option value="staff">Staff Assistant</option>
+                  <option value="admin">Admin Manager</option>
+                </select>
+              </div>
+              <button class="btn btn-gold" type="submit" style="width:100%; padding:0.6rem; font-family:'Oswald', sans-serif; font-size:0.9rem; margin-top:0.5rem; cursor:pointer;">Create Account</button>
+              <p id="create-staff-feedback" style="font-size:0.82rem; font-weight:bold; margin:0; text-align:center;"></p>
+            </form>
+          </div>
+
+          <!-- Update User Role section -->
+          <div class="analytics-card" style="height: fit-content;">
+            <h3>Update User Role / RBAC</h3>
+            <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1.25rem; line-height: 1.4;">
+              Promote an existing customer by email, or change a staff member's role (Manager / Admin / Kitchen).
+            </p>
+            <form id="update-role-form" style="display:flex; flex-direction:column; gap: 0.75rem;">
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">User Email</label>
+                <input type="email" id="update-role-email" class="admin-input" required placeholder="customer@gmail.com" style="width:100%; box-sizing:border-box;">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Target Role</label>
+                <select id="update-role-select" class="admin-select" style="width:100%; box-sizing:border-box;">
+                  <option value="customer">Customer</option>
+                  <option value="kitchen">Kitchen Staff / Chef</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin Manager</option>
+                  <option value="superadmin">Superadmin</option>
+                </select>
+              </div>
+              <button class="btn btn-gold" type="submit" style="width:100%; padding:0.6rem; font-family:'Oswald', sans-serif; font-size:0.9rem; margin-top:0.5rem; cursor:pointer;">Update Role</button>
+              <p id="update-role-feedback" style="font-size:0.82rem; font-weight:bold; margin:0; text-align:center;"></p>
+            </form>
+          </div>
+        </div>
+
+        <!-- Staff list section -->
+        <div class="analytics-card">
+          <h3>Staff Directory</h3>
+          <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.88rem;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#e8a825;">
+                  <th style="padding:0.5rem 0;">Name</th>
+                  <th style="padding:0.5rem 0;">Email</th>
+                  <th style="padding:0.5rem 0;">Role</th>
+                  <th style="padding:0.5rem 0;">Status</th>
+                  <th style="padding:0.5rem 0; text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staff-directory-rows">
+                <tr>
+                  <td colspan="5" style="text-align:center; opacity:0.5; padding:1.5rem 0;">Loading staff profiles...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- INVENTORY MANAGER PANEL -->
+    <main class="admin-panel" id="panel-inventory">
+      <!-- Inventory stats counters -->
+      <div class="analytics-stats" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 2rem;">
+        <div class="stat-box">
+          <h4>Total Ingredients</h4>
+          <div class="number" id="inv-stat-total">0</div>
+        </div>
+        <div class="stat-box">
+          <h4>Low Stock Items</h4>
+          <div class="number" id="inv-stat-low" style="color: var(--error-red);">0</div>
+        </div>
+        <div class="stat-box">
+          <h4>Out of Stock</h4>
+          <div class="number" id="inv-stat-empty" style="color: var(--error-red);">0</div>
+        </div>
+        <div class="stat-box">
+          <h4>Total Stock Value</h4>
+          <div class="number" id="inv-stat-value">£0.00</div>
+        </div>
+      </div>
+
+      <!-- Inventory layout grid -->
+      <div class="admin-grid" style="grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Stock List Table -->
+        <div class="analytics-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h3>Raw Ingredient Inventory</h3>
+            <div style="display:flex; gap:0.5rem;">
+              <select id="inv-category-filter" class="admin-select" style="padding:0.4rem; cursor:pointer;">
+                <option value="All">All Categories</option>
+                <option value="Meat and Poultry">Meat & Poultry</option>
+                <option value="Dairy and Eggs">Dairy & Eggs</option>
+                <option value="Bread and Bakery">Bread & Bakery</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Pantry">Pantry</option>
+                <option value="Frozen">Frozen</option>
+                <option value="Sauces">Sauces</option>
+                <option value="Coffee and Tea">Coffee & Tea</option>
+                <option value="Spirits">Spirits</option>
+                <option value="Alcohol">Alcohol</option>
+                <option value="Soft Drinks">Soft Drinks</option>
+                <option value="Packaging">Packaging</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.85rem;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#e8a825;">
+                  <th style="padding:0.5rem 0;">Ingredient Name</th>
+                  <th style="padding:0.5rem 0;">Category</th>
+                  <th style="padding:0.5rem 0; text-align:center;">Stock Level</th>
+                  <th style="padding:0.5rem 0; text-align:center;">Status</th>
+                  <th style="padding:0.5rem 0; text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table-rows">
+                <tr>
+                  <td colspan="5" style="text-align:center; opacity:0.5; padding:1.5rem 0;">Loading stock profiles...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right column: Stock Operations -->
+        <div style="display:flex; flex-direction:column; gap:2rem;">
+          <!-- Stock In Form -->
+          <div class="analytics-card">
+            <h3>Stock In (Restock)</h3>
+            <form id="stock-in-form" style="display:flex; flex-direction:column; gap:0.5rem;">
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Select Ingredient</label>
+                <select id="stock-in-item" class="admin-select" required style="width:100%; box-sizing:border-box;"></select>
+              </div>
+              <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Quantity to Add</label>
+                  <input type="number" step="0.01" id="stock-in-qty" class="admin-input" required placeholder="e.g. 10" style="width:100%; box-sizing:border-box;">
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Notes / Invoice Reference</label>
+                <input type="text" id="stock-in-notes" class="admin-input" placeholder="e.g. Weekly delivery" style="width:100%; box-sizing:border-box;">
+              </div>
+              <button class="btn btn-gold" type="submit" style="width:100%; padding:0.5rem; font-family:'Oswald', sans-serif; font-size:0.85rem; cursor:pointer;">Update Stock In</button>
+            </form>
+          </div>
+
+          <!-- Stock Out Form -->
+          <div class="analytics-card">
+            <h3>Stock Out (Reduce Stock)</h3>
+            <form id="stock-out-form" style="display:flex; flex-direction:column; gap:0.5rem;">
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Select Ingredient</label>
+                <select id="stock-out-item" class="admin-select" required style="width:100%; box-sizing:border-box;"></select>
+              </div>
+              <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Quantity to Remove</label>
+                  <input type="number" step="0.01" id="stock-out-qty" class="admin-input" required placeholder="e.g. 2" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div style="display:flex; flex-direction:column; flex:1.2;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Reason</label>
+                  <select id="stock-out-reason" class="admin-select" required style="width:100%; box-sizing:border-box;">
+                    <option value="Spoilage">Spoilage</option>
+                    <option value="Preparation Waste">Preparation Waste</option>
+                    <option value="Spillage">Spillage</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Correction">Correction</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-outline" type="submit" style="width:100%; padding:0.5rem; font-family:'Oswald', sans-serif; font-size:0.85rem; border-color:var(--error-red); color:var(--error-red); cursor:pointer;">Update Stock Out</button>
+            </form>
+          </div>
+
+          <!-- Add New Stock Item Form -->
+          <div class="analytics-card">
+            <h3>Add New Stock Item</h3>
+            <form id="add-stock-form" style="display:flex; flex-direction:column; gap:0.5rem;">
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Item Name</label>
+                <input type="text" id="add-stock-name" class="admin-input" required placeholder="e.g. Whole Milk" style="width:100%; box-sizing:border-box;">
+              </div>
+              
+              <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Category</label>
+                <select id="add-stock-category-select" class="admin-select" required style="width:100%; box-sizing:border-box;"></select>
+                <input type="text" id="add-stock-category-new" class="admin-input hidden" placeholder="Enter new category name" style="width:100%; box-sizing:border-box; margin-top:0.35rem;">
+              </div>
+
+              <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Initial Stock</label>
+                  <input type="number" step="0.01" id="add-stock-initial" class="admin-input" required placeholder="e.g. 50" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Min Threshold</label>
+                  <input type="number" step="0.01" id="add-stock-min" class="admin-input" required placeholder="e.g. 10" style="width:100%; box-sizing:border-box;">
+                </div>
+              </div>
+
+              <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Cost per Unit (£)</label>
+                  <input type="number" step="0.01" id="add-stock-cost" class="admin-input" required placeholder="e.g. 1.25" style="width:100%; box-sizing:border-box;">
+                </div>
+                <div style="display:flex; flex-direction:column; flex:1;">
+                  <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Unit</label>
+                  <input type="text" id="add-stock-unit" class="admin-input" required placeholder="e.g. litres" style="width:100%; box-sizing:border-box;">
+                </div>
+              </div>
+
+              <button class="btn btn-gold" type="submit" style="width:100%; padding:0.6rem; font-family:'Oswald', sans-serif; font-size:0.9rem; margin-top:0.5rem; cursor:pointer;">Create Stock Item</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SUPPLIERS & PURCHASE ORDERS PANEL -->
+    <main class="admin-panel" id="panel-suppliers">
+      <div class="admin-grid" style="grid-template-columns: 1.2fr 1fr; gap: 2rem;">
+        
+        <!-- Suppliers Directory -->
+        <div class="analytics-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
+            <h3>Suppliers Directory</h3>
+            <button class="btn btn-gold" onclick="openAddSupplierModal()" style="padding:0.4rem 0.8rem; font-size:0.8rem; cursor:pointer;">+ Add Supplier</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.82rem;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#e8a825;">
+                  <th style="padding:0.5rem 0;">Name</th>
+                  <th style="padding:0.5rem 0;">Contact</th>
+                  <th style="padding:0.5rem 0;">Delivery Days</th>
+                  <th style="padding:0.5rem 0; text-align:center;">Min Order</th>
+                  <th style="padding:0.5rem 0; text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="suppliers-table-rows">
+                <tr>
+                  <td colspan="5" style="text-align:center; opacity:0.5; padding:1.5rem 0;">Loading suppliers directory...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Purchase Orders -->
+        <div class="analytics-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
+            <h3>Purchase Orders (POs)</h3>
+            <button class="btn btn-gold" onclick="openCreatePOModal()" style="padding:0.4rem 0.8rem; font-size:0.8rem; cursor:pointer;">+ Create PO</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.82rem;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#e8a825;">
+                  <th style="padding:0.5rem 0;">PO Number</th>
+                  <th style="padding:0.5rem 0;">Supplier</th>
+                  <th style="padding:0.5rem 0; text-align:center;">Total</th>
+                  <th style="padding:0.5rem 0; text-align:center;">Status</th>
+                  <th style="padding:0.5rem 0; text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="purchase-orders-rows">
+                <tr>
+                  <td colspan="5" style="text-align:center; opacity:0.5; padding:1.5rem 0;">Loading purchase orders...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Add Supplier Modal -->
+      <div class="kitchen-modal-overlay" id="add-supplier-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9000; display:none; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+        <div class="kitchen-modal" style="background:#121212; border:1px solid #e8a825; border-radius:12px; max-width:480px; width:90%; padding:2rem;">
+          <h3 id="supplier-modal-title">Add Supplier</h3>
+          <form id="add-supplier-form" style="display:flex; flex-direction:column; gap:0.75rem;">
+            <input type="hidden" id="supplier-id-input">
+            <div style="display:flex; flex-direction:column;">
+              <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Supplier Name</label>
+              <input type="text" id="supplier-name" class="admin-input" required placeholder="e.g. Smithfield Meats">
+            </div>
+            <div style="display:flex; flex-direction:column;">
+              <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Contact Person</label>
+              <input type="text" id="supplier-contact" class="admin-input" required placeholder="David Smith">
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <div style="display:flex; flex-direction:column; flex:1;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Phone</label>
+                <input type="text" id="supplier-phone" class="admin-input" required placeholder="+447700900077">
+              </div>
+              <div style="display:flex; flex-direction:column; flex:1;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Email</label>
+                <input type="email" id="supplier-email" class="admin-input" required placeholder="orders@smithfield.co.uk">
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column;">
+              <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Address</label>
+              <input type="text" id="supplier-address" class="admin-input" placeholder="Market Lane, London EC1">
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <div style="display:flex; flex-direction:column; flex:1;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Terms</label>
+                <input type="text" id="supplier-terms" class="admin-input" placeholder="e.g. Net 30">
+              </div>
+              <div style="display:flex; flex-direction:column; flex:1;">
+                <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Min Order (£)</label>
+                <input type="number" id="supplier-min-order" class="admin-input" placeholder="e.g. 100">
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column;">
+              <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Delivery Days (Mon, Wed, Fri etc.)</label>
+              <input type="text" id="supplier-days" class="admin-input" placeholder="Comma separated, e.g. Monday, Wednesday">
+            </div>
+            <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+              <button class="btn btn-gold" type="submit" style="flex:1; cursor:pointer;">Save Supplier</button>
+              <button class="btn btn-outline" type="button" onclick="closeAddSupplierModal()" style="flex:1; border-color:var(--error-red); color:var(--error-red); cursor:pointer;">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Create Purchase Order Modal -->
+      <div class="kitchen-modal-overlay" id="create-po-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9000; display:none; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+        <div class="kitchen-modal" style="background:#121212; border:1px solid #e8a825; border-radius:12px; max-width:600px; width:90%; padding:2rem; max-height:90vh; overflow-y:auto;">
+          <h3>Create Purchase Order</h3>
+          <div style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem;">
+            <div style="display:flex; flex-direction:column;">
+              <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">Select Supplier</label>
+              <select id="po-supplier-select" class="admin-select" style="width:100%;" onchange="loadSupplierIngredientsForPO(this.value)"></select>
+            </div>
+            <div style="border-top:1px dashed rgba(255,255,255,0.08); padding-top:1rem;">
+              <h4 style="font-family:'Oswald', sans-serif; font-size:0.9rem; color:#e8a825; margin:0 0 0.5rem 0;">Order Items</h4>
+              <div id="po-items-container" style="display:flex; flex-direction:column; gap:0.5rem; max-height:220px; overflow-y:auto; padding-right:0.25rem;">
+                <p style="opacity:0.5; font-size:0.85rem;">Select a supplier to see their items.</p>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column;">
+              <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem;">PO Notes</label>
+              <input type="text" id="po-notes" class="admin-input" placeholder="Additional delivery instructions...">
+            </div>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-gold" onclick="submitPurchaseOrder()" style="flex:1; cursor:pointer;">Generate PO</button>
+            <button class="btn btn-outline" onclick="closeCreatePOModal()" style="flex:1; border-color:var(--error-red); color:var(--error-red); cursor:pointer;">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- AUDIT LOGS PANEL -->
+    <main class="admin-panel" id="panel-audit-logs">
+      <div class="analytics-card">
+        <h3 style="border-bottom: 1px dashed rgba(201,148,58,0.3); padding-bottom:0.5rem; margin-bottom:1.5rem;">Security & Audit Logs</h3>
+        <p style="font-size:0.85rem; opacity:0.8; margin-top:-0.75rem; margin-bottom:1.25rem;">Comprehensive audit trails of all system-critical operations including logins, inventory deductions, Rota modifications, and role updates.</p>
+        <div style="overflow-x: auto;">
+          <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.85rem;">
+            <thead>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#e8a825;">
+                <th style="padding:0.5rem 0; width:20%;">Timestamp</th>
+                <th style="padding:0.5rem 0; width:25%;">Action</th>
+                <th style="padding:0.5rem 0; width:20%;">Performed By</th>
+                <th style="padding:0.5rem 0; width:15%;">Target Collection</th>
+                <th style="padding:0.5rem 0; text-align:right;">Target ID</th>
+              </tr>
+            </thead>
+            <tbody id="audit-logs-rows">
+              <tr>
+                <td colspan="5" style="text-align:center; opacity:0.5; padding:1.5rem 0;">Loading security audit database...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  </div>
+
+  <!-- Live Table Management Modals -->
+  <div id="table-modal-bg" onclick="if(event.target===this)closeTableModal()" 
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
+              z-index:9999;align-items:center;justify-content:center;padding:1rem">
+    <div id="table-modal"></div>
+  </div>
+
+  <div id="qr-modal-bg" onclick="if(event.target===this)closeQRModal()"
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
+              z-index:9999;align-items:center;justify-content:center;padding:1rem">
+    <div id="qr-modal"></div>
+  </div>
+
+  <div id="toast-container" style="position:fixed;bottom:1.5rem;right:1.5rem;
+       z-index:9999;display:flex;flex-direction:column;gap:0.5rem;max-width:320px">
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js?v=3.3.2"></script>
+  <script src="js/admin-inventory.js?v=3.3.2"></script>
+  
+  <script>
+    const formatPrice = n => '£' + n.toFixed(2);
+    
+    // Helper
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => [...document.querySelectorAll(sel)];
+
+    // Set back-to-site links dynamically based on hostname
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const customerSiteUrl = isLocal ? '../user/index.html' : 'https://russell-hall-cafe-user.pages.dev';
+      document.querySelectorAll('.back-btn, a[href="index.html"]').forEach(el => {
+        el.href = customerSiteUrl;
+      });
+    });
+
+    // --- INACTIVITY SESSION TIMEOUT (4 hours for Admin) ---
+    let idleTimer;
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      const indicator = $('#session-timeout-indicator');
+      if (indicator) {
+        indicator.textContent = `Session active (Auto-logout at ${new Date(Date.now() + 4 * 60 * 60 * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})`;
+      }
+      idleTimer = setTimeout(() => {
+        alert("Session expired due to 4 hours of inactivity. You have been logged out.");
+        auth.signOut().then(() => window.location.reload());
+      }, 4 * 60 * 60 * 1000); // 4 hours
+    }
+    window.addEventListener('mousemove', resetIdleTimer);
+    window.addEventListener('keypress', resetIdleTimer);
+    window.addEventListener('click', resetIdleTimer);
+    resetIdleTimer();
+
+    // --- SECURE ADMIN ACCESS CHECK ---
+    async function initAdminPortal() {
+      // Step 1 — Show loading screen, hide everything else
+      document.getElementById('admin-loading').style.display = 'flex';
+      document.getElementById('admin-content').style.display = 'none';
+      document.getElementById('access-denied-screen').style.display = 'none';
+      
+      // Step 2 — Wait for Firebase Auth to confirm session
+      return new Promise((resolve) => {
+        firebase.auth().onAuthStateChanged(async (user) => {
+          
+          if (!user) {
+            showAccessDenied('No active session. Please log in.');
+            resolve(false);
+            return;
+          }
+          
+          try {
+            // Step 3 — Fetch role from Firestore — NEVER trust client-side role
+            let userData = window.currentUserProfile;
+            if (!userData || userData.uid !== user.uid) {
+              const userDoc = await db.collection('users').doc(user.uid).get();
+              if (!userDoc.exists) {
+                showAccessDenied('User profile not found.');
+                await firebase.auth().signOut();
+                resolve(false);
+                return;
+              }
+              userData = userDoc.data();
+            }
+            const role = userData.role;
+            
+            // Step 4 — Check role is admin or superadmin
+            if (role !== 'admin' && role !== 'superadmin' && role !== 'manager') {
+              showAccessDenied(`Access denied. Your account role (${role}) does not have permission to view the Admin Dashboard.`);
+              await firebase.auth().signOut();
+              resolve(false);
+              return;
+            }
+            
+            // Allowed role — show admin content
+            document.getElementById('admin-loading').style.display = 'none';
+            document.getElementById('admin-content').style.display = 'block';
+            document.getElementById('access-denied-screen').style.display = 'none';
+            
+            // Set profile details
+            document.getElementById('admin-profile-name').textContent = userData.name || 'Admin';
+            
+            adjustTabsForRole(role);
+            initAdminDashboard();
+            
+            resolve(true);
+          } catch (err) {
+            showAccessDenied('Error verifying authorization: ' + err.message);
+            resolve(false);
+          }
+        });
+      });
+    }
+
+    function showAccessDenied(msg) {
+      document.getElementById('admin-loading').style.display = 'none';
+      document.getElementById('admin-content').style.display = 'none';
+      document.getElementById('access-denied-screen').style.display = 'flex';
+      const errEl = document.getElementById('login-error');
+      if (errEl) {
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      }
+    }
+
+    // Run check immediately
+    (function secureAdminPage() {
+      document.body.style.visibility = 'visible';
+      initAdminPortal();
+    })();
+
+    // Login Form Submit (wired to centralized universalLogin)
+    $('#admin-login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const email = $('#admin-email-input').value.trim();
+      const password = $('#admin-password-input').value;
+      
+      universalLogin(email, password, 'admin');
+    });
+
+    // Admin Logout
+    $('#admin-logout-btn').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        cleanupAdminListeners();
+        window.location.reload();
+      });
+    });
+
+    function cleanupAdminListeners() {
+      if (ordersUnsubscribe) { ordersUnsubscribe(); ordersUnsubscribe = null; }
+      if (bookingsUnsubscribe) { bookingsUnsubscribe(); bookingsUnsubscribe = null; }
+      if (staffUnsubscribe) { staffUnsubscribe(); staffUnsubscribe = null; }
+    }
+
+    // Tab control
+    $$('.admin-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        $$('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+        $$('.admin-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        $('#panel-' + btn.dataset.panel).classList.add('active');
+      });
+    });
+
+    // --- REPORT EXPORTER TRIGGERS ---
+    window.triggerPDFReportExport = function() {
+      const start = $('#report-start-date').value;
+      const end = $('#report-end-date').value;
+      if (typeof downloadSalesReportPDF === 'function') {
+        downloadSalesReportPDF(start, end);
+      } else {
+        alert("PDF download module not initialized.");
+      }
+    };
+    window.triggerCSVReportExport = function() {
+      const start = $('#report-start-date').value;
+      const end = $('#report-end-date').value;
+      if (typeof downloadSalesReportCSV === 'function') {
+        downloadSalesReportCSV(start, end);
+      } else {
+        alert("CSV download module not initialized.");
+      }
+    };
+
+    // --- ORDER HISTORY DATE FILTERS ---
+    $('#report-start-date')?.addEventListener('change', () => {
+      if (typeof renderCompletedOrdersLogOnly === 'function') renderCompletedOrdersLogOnly();
+    });
+    $('#report-end-date')?.addEventListener('change', () => {
+      if (typeof renderCompletedOrdersLogOnly === 'function') renderCompletedOrdersLogOnly();
+    });
+    $('#clear-date-filter-btn')?.addEventListener('click', () => {
+      const startInput = $('#report-start-date');
+      const endInput = $('#report-end-date');
+      if (startInput) startInput.value = '';
+      if (endInput) endInput.value = '';
+      if (typeof renderCompletedOrdersLogOnly === 'function') renderCompletedOrdersLogOnly();
+    });
+
+    // --- DASHBOARD REAL-TIME CONTROLLER ---
+    let _allCompletedOrders = [];
+    let initialized = false;
+    let ordersUnsubscribe = null;
+    let bookingsUnsubscribe = null;
+    let staffUnsubscribe = null;
+
+    function initAdminDashboard() {
+      if (initialized) return;
+      initialized = true;
+
+      // Seeding and watching tables floor plan
+      try {
+        seedTablesIfEmpty();
+        startAdminTablesWatcher();
+        watchTables('admin-floor-map', true);
+      } catch (err) {
+        console.error("Error initializing live tables floor plan:", err);
+      }
+
+      // Initialize Modular Inventory System
+      try {
+        if (typeof initAdminInventorySystem === 'function') {
+          initAdminInventorySystem();
+        }
+      } catch (err) {
+        console.error("Error initializing inventory system:", err);
+      }
+
+      // Listen to active orders — no date filter to avoid requiring a composite index
+      ordersUnsubscribe = db.collection('orders')
+        .onSnapshot(snapshot => {
+          const activeOrders = [];
+          const completedOrders = [];
+          
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.status === 'complete' || data.status === 'delivered') {
+              completedOrders.push({ id: doc.id, ...data });
+            } else {
+              activeOrders.push({ id: doc.id, ...data });
+            }
+          });
+
+          // Sort active orders (oldest first for FIFO preparation queue)
+          activeOrders.sort((a, b) => {
+            const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+            const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+            return timeA - timeB;
+          });
+
+          renderActiveOrders(activeOrders);
+          renderAnalytics(completedOrders);
+        }, err => {
+          console.error("Orders listener error:", err);
+          const grid = $('#active-orders-grid');
+          if (grid) {
+            grid.innerHTML = `<p class="error-msg" style="grid-column: 1/-1; color: var(--error-red); text-align: center; padding: 1.5rem 0;">Error loading active orders: ${err.message} (Verify Firestore Rules)</p>`;
+          }
+        });
+
+      // Listen to bookings
+      bookingsUnsubscribe = db.collection('bookings')
+        .onSnapshot(snapshot => {
+          const bookings = [];
+          snapshot.forEach(doc => {
+            bookings.push({ id: doc.id, ...doc.data() });
+          });
+          bookings.sort((a, b) => {
+            const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+            const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+            return timeB - timeA;
+          });
+          window._allBookings = bookings;
+          renderBookings(bookings);
+          if (typeof window.updateAdminBookingStats === 'function') {
+            window.updateAdminBookingStats();
+          }
+        }, err => {
+          console.error("Bookings listener error:", err);
+          const grid = $('#reservations-grid');
+          if (grid) {
+            grid.innerHTML = `<p class="error-msg" style="grid-column: 1/-1; color: var(--error-red); text-align: center; padding: 1.5rem 0;">Error loading bookings: ${err.message} (Verify Firestore Rules)</p>`;
+          }
+        });
+
+      // Listen to staff users
+      staffUnsubscribe = db.collection('users')
+        .onSnapshot(snapshot => {
+          const allStaff = [];
+          let workingCount = 0;
+          let totalStaffCount = 0;
+
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.role === 'admin' || data.role === 'kitchen') {
+              allStaff.push(data);
+              totalStaffCount++;
+              if (data.isWorking) {
+                workingCount++;
+              }
+            }
+          });
+
+          const workingEl = $('#stat-working-staff');
+          const totalEl = $('#stat-total-staff');
+          if (workingEl) workingEl.textContent = workingCount;
+          if (totalEl) totalEl.textContent = totalStaffCount;
+
+          renderStaffDirectory(allStaff);
+        }, err => {
+          console.error("Staff list listener error:", err);
+          const tbody = $('#staff-directory-rows');
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--error-red); padding:1.5rem 0;">Error loading staff profiles: ${err.message} (Verify Firestore Rules)</td></tr>`;
+          }
+        });
+    }
+
+    function renderActiveOrders(orders) {
+      const grid = $('#active-orders-grid');
+      if (orders.length === 0) {
+        grid.innerHTML = `<p class="empty-msg" style="grid-column: 1/-1;">No active orders right now.</p>`;
+        return;
+      }
+
+      grid.innerHTML = orders.map(o => {
+        const dateStr = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Recent';
+        const customerName = o.customerDetails?.name || 'Guest';
+        const customerPhone = o.customerDetails?.phone || 'N/A';
+        const orderType = (o.orderType || 'collection').toUpperCase();
+        const tableNum = o.tableNumber || '';
+        const deliveryAddr = o.deliveryDetails ? `${o.deliveryDetails.address}, ${o.deliveryDetails.city}, ${o.deliveryDetails.zip}` : '';
+        const paymentMethod = (o.paymentMethod || 'cash').toUpperCase();
+        const paymentStatus = o.paymentStatus || 'pending';
+        const itemsList = Array.isArray(o.items) ? o.items : [];
+        const estimatedTime = o.estimatedTime || 'N/A';
+        const status = o.status || 'received';
+        const orderId = o.orderId || o.id || 'N/A';
+        const instructions = o.instructions || '';
+        
+        return `
+          <div class="admin-card" data-id="${orderId}">
+            <div class="admin-card-header">
+              <h3>Order #${orderId}</h3>
+              <span class="status-badge ${status}">${status}</span>
+            </div>
+            <div class="admin-card-body">
+              <p><strong>Customer:</strong> ${customerName} (${customerPhone})</p>
+              <p><strong>Type:</strong> ${orderType} ${tableNum ? `· Table: ${tableNum}` : ''} ${deliveryAddr ? `<br>📍 <strong>Address:</strong> ${deliveryAddr}` : ''}</p>
+              <p><strong>Time:</strong> ${dateStr} · <strong>Payment:</strong> ${paymentMethod} (${paymentStatus})</p>
+              <p style="margin-top:0.75rem;font-weight:600;color:#e8a825">Items:</p>
+              <div style="padding-left:0.5rem;border-left:1px solid rgba(232, 168, 37, 0.2)">
+                ${itemsList.map(i => `<p style="font-size:0.85rem">${i.qty || 1}× ${i.name || 'Unknown Item'} ${i.options && i.options.length ? `(${i.options.map(op=>op.label).join(', ')})` : ''}</p>`).join('')}
+              </div>
+              ${instructions ? `<p style="margin-top:0.5rem;font-style:italic;opacity:0.8">"Instructions: ${instructions}"</p>` : ''}
+            </div>
+            <div class="admin-card-footer">
+              <div style="display:flex;flex-direction:column;flex:1">
+                <label style="font-size:0.72rem;margin-bottom:0.25rem;opacity:0.7">Status</label>
+                <select class="admin-select" onchange="updateOrderStatus('${orderId}', this.value)">
+                  <option value="received" ${status === 'received' ? 'selected' : ''}>Received</option>
+                  <option value="preparing" ${status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                  <option value="cooking" ${status === 'cooking' ? 'selected' : ''}>Cooking</option>
+                  <option value="ready" ${status === 'ready' ? 'selected' : ''}>Ready</option>
+                  <option value="complete" ${status === 'complete' ? 'selected' : ''}>Complete</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;flex:1">
+                <label style="font-size:0.72rem;margin-bottom:0.25rem;opacity:0.7">Prep Time</label>
+                <input type="text" class="admin-input" value="${estimatedTime}" onchange="updateOrderPrepTime('${orderId}', this.value)" placeholder="e.g. 25 mins">
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateOrderStatus(orderId, newStatus) {
+      db.collection('orders').doc(orderId).update({
+        status: newStatus,
+        paymentStatus: newStatus === 'complete' ? 'paid' : 'paid' // auto-mark paid on completion
+      }).then(() => {
+        console.log(`Status updated for order ${orderId} to ${newStatus}`);
+      }).catch(err => {
+        alert("Failed to update status: " + err.message);
+      });
+    }
+
+    function updateOrderPrepTime(orderId, newTime) {
+      db.collection('orders').doc(orderId).update({
+        estimatedTime: newTime
+      }).then(() => {
+        console.log(`Prep time updated for order ${orderId} to ${newTime}`);
+      }).catch(err => {
+        alert("Failed to update prep time: " + err.message);
+      });
+    }
+
+    // --- RENDERING RESERVATIONS ---
+    function renderBookings(bookings) {
+      const grid = $('#reservations-grid');
+      if (bookings.length === 0) {
+        grid.innerHTML = `<p class="empty-msg" style="grid-column: 1/-1;">No reservations recorded.</p>`;
+        return;
+      }
+
+      grid.innerHTML = bookings.map(b => {
+        const dateStr = b.date ? new Date(b.date).toLocaleDateString() : '';
+        return `
+          <div class="admin-card" data-id="${b.bookingId}">
+            <div class="admin-card-header">
+              <h3>Booking #${b.bookingId}</h3>
+              <span class="status-badge ${b.status}">${b.status}</span>
+            </div>
+            <div class="admin-card-body">
+              <p><strong>Customer:</strong> ${b.name} (${b.phone})</p>
+              <p><strong>Reservation:</strong> ${dateStr} at ${b.time} (${b.duration})</p>
+              <p><strong>Guests:</strong> ${b.guests} People</p>
+              <p><strong>Assigned Table No:</strong></p>
+              <input type="text" class="admin-input" value="${b.tableNumber}" onchange="updateBookingTable('${b.bookingId}', this.value)" style="width:100%;margin-top:0.25rem" placeholder="e.g. Table 5">
+            </div>
+            <div class="admin-card-footer" style="justify-content:flex-end">
+              ${b.status !== 'confirmed' ? `<button class="btn btn-gold" onclick="updateBookingStatus('${b.bookingId}', 'confirmed')" style="padding:0.4rem 0.8rem;font-size:0.8rem">Confirm</button>` : ''}
+              ${b.status !== 'cancelled' ? `<button class="btn btn-outline" onclick="updateBookingStatus('${b.bookingId}', 'cancelled')" style="padding:0.4rem 0.8rem;font-size:0.8rem;border-color:var(--error-red);color:var(--error-red)">Cancel</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateBookingTable(bookingId, newTable) {
+      db.collection('bookings').doc(bookingId).update({
+        tableNumber: newTable
+      }).then(() => {
+        console.log(`Table assigned for booking ${bookingId}`);
+      }).catch(err => {
+        alert("Failed to assign table: " + err.message);
+      });
+    }
+
+    function updateBookingStatus(bookingId, newStatus) {
+      db.collection('bookings').doc(bookingId).update({
+        status: newStatus
+      }).then(() => {
+        console.log(`Booking status updated for ${bookingId} to ${newStatus}`);
+      }).catch(err => {
+        alert("Failed to update status: " + err.message);
+      });
+    }
+
+    // --- ANALYTICS CALCULATIONS ---
+    function renderAnalytics(completedOrders) {
+      _allCompletedOrders = completedOrders;
+
+      // Calculate totals and counts
+      let dailyTotal = 0;
+      let dailyCount = 0;
+      let monthlyTotal = 0;
+      let monthlyCount = 0;
+      let yearlyTotal = 0;
+      let yearlyCount = 0;
+
+      const now = new Date();
+      const todayStr = now.toDateString();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      completedOrders.forEach(o => {
+        const orderDate = o.createdAt?.toDate ? o.createdAt.toDate() : null;
+        if (!orderDate) return;
+
+        const orderTotal = o.total || 0;
+
+        // Sum sales & count orders
+        if (orderDate.toDateString() === todayStr) {
+          dailyTotal += orderTotal;
+          dailyCount++;
+        }
+        if (orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear) {
+          monthlyTotal += orderTotal;
+          monthlyCount++;
+        }
+        if (orderDate.getFullYear() === currentYear) {
+          yearlyTotal += orderTotal;
+          yearlyCount++;
+        }
+      });
+
+      // Update UI numbers
+      $('#stat-daily-sales').textContent = formatPrice(dailyTotal);
+      $('#stat-daily-count').textContent = `${dailyCount} order${dailyCount === 1 ? '' : 's'} today`;
+      
+      $('#stat-monthly-sales').textContent = formatPrice(monthlyTotal);
+      $('#stat-monthly-count').textContent = `${monthlyCount} order${monthlyCount === 1 ? '' : 's'} this month`;
+      
+      $('#stat-yearly-sales').textContent = formatPrice(yearlyTotal);
+      $('#stat-yearly-count').textContent = `${yearlyCount} order${yearlyCount === 1 ? '' : 's'} this year`;
+      
+      // Render completed orders log
+      renderCompletedOrdersLogOnly();
+    }
+
+    function renderCompletedOrdersLogOnly() {
+      const log = $('#completed-orders-log');
+      if (!log) return;
+      
+      const startVal = $('#report-start-date')?.value;
+      const endVal = $('#report-end-date')?.value;
+      const clearBtn = $('#clear-date-filter-btn');
+      
+      if (startVal || endVal) {
+        if (clearBtn) clearBtn.style.display = 'inline-block';
+      } else {
+        if (clearBtn) clearBtn.style.display = 'none';
+      }
+      
+      let filtered = [..._allCompletedOrders];
+      
+      if (startVal) {
+        const startSecs = new Date(startVal + 'T00:00:00').getTime();
+        filtered = filtered.filter(o => {
+          const d = o.createdAt?.toDate ? o.createdAt.toDate().getTime() : 0;
+          return d >= startSecs;
+        });
+      }
+      if (endVal) {
+        const endSecs = new Date(endVal + 'T23:59:59').getTime();
+        filtered = filtered.filter(o => {
+          const d = o.createdAt?.toDate ? o.createdAt.toDate().getTime() : 0;
+          return d <= endSecs;
+        });
+      }
+      
+      if (filtered.length === 0) {
+        log.innerHTML = `<p class="empty-msg" style="text-align:center;padding:1.5rem 0;">No completed sales found for the selected date range.</p>`;
+      } else {
+        filtered.sort((a,b) => {
+          const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+          const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+          return timeB - timeA;
+        });
+
+        log.innerHTML = filtered.map(o => {
+          const dateStr = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString() : '';
+          const vatVal = o.vat || 0;
+          const tipVal = o.tip || 0;
+          
+          // Reconstruct VAT breakdown values
+          const standardGross = vatVal * 6;
+          const standardNet = vatVal * 5;
+          const zeroGross = Math.max(0, Math.round(((o.total || 0) - tipVal - standardGross) * 100) / 100);
+          
+          return `
+            <div class="list-row" style="flex-direction: column; align-items: flex-start; gap: 0.25rem; padding: 0.75rem 0;">
+              <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div>
+                  <strong>#${o.orderId}</strong> - ${(o.customerDetails && o.customerDetails.name) || 'Guest'}
+                  <div style="font-size:0.75rem;opacity:0.6">${dateStr} · Type: ${o.orderType} ${o.tableNumber ? `(Table ${o.tableNumber})` : ''}</div>
+                </div>
+                <div style="font-weight:bold;color:#e8a825">${formatPrice(o.total)}</div>
+              </div>
+              <div style="font-size:0.7rem;opacity:0.5;line-height:1.3;width:100%;border-top:1px dashed rgba(255,255,255,0.08);padding-top:0.25rem;margin-top:0.15rem;">
+                VAT Split · 20% Std Net: ${formatPrice(standardNet)} (VAT: ${formatPrice(vatVal)}) · 0% Zero Net: ${formatPrice(zeroGross)} ${tipVal > 0 ? `· Staff Tip: ${formatPrice(tipVal)}` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // --- STAFF MANAGEMENT RENDERING & ACTIONS ---
+    function renderStaffDirectory(staff) {
+      const tbody = $('#staff-directory-rows');
+      if (!tbody) return;
+      
+      if (staff.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; opacity:0.5; padding:1.5rem 0;">No staff accounts found.</td></tr>`;
+        return;
+      }
+
+      // Sort by role (admin first) and then name
+      staff.sort((a, b) => {
+        if (a.role === b.role) {
+          return (a.name || '').localeCompare(b.name || '');
+        }
+        return a.role === 'admin' ? -1 : 1;
+      });
+
+      tbody.innerHTML = staff.map(s => {
+        const isSelf = s.uid === (auth.currentUser ? auth.currentUser.uid : '');
+        const statusText = s.isWorking 
+          ? '<span style="color:#2ecc71; font-weight:bold; display:inline-flex; align-items:center; gap:0.25rem;"><span class="status-dot working" style="width:8px; height:8px; border-radius:50%; background:#2ecc71; display:inline-block; box-shadow:0 0 8px #2ecc71;"></span> WORKING</span>'
+          : '<span style="opacity:0.5; display:inline-flex; align-items:center; gap:0.25rem;"><span class="status-dot" style="width:8px; height:8px; border-radius:50%; background:#95a5a6; display:inline-block;"></span> OFF DUTY</span>';
+        
+        const roleBadge = s.role === 'admin'
+          ? '<span style="background:rgba(232, 168, 37, 0.15); border:1px solid #e8a825; color:#e8a825; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.72rem; font-family:\'Oswald\', sans-serif;">ADMIN</span>'
+          : '<span style="background:rgba(52, 152, 219, 0.15); border:1px solid #3498db; color:#3498db; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.72rem; font-family:\'Oswald\', sans-serif;">KITCHEN</span>';
+        
+        // Manual shift toggle action
+        const toggleBtn = s.isWorking
+          ? `<button class="btn btn-outline" onclick="toggleStaffShift('${s.uid}', false)" style="padding:0.25rem 0.5rem; font-size:0.75rem; border-color:var(--error-red); color:var(--error-red); cursor:pointer;">Clock Out</button>`
+          : `<button class="btn btn-gold" onclick="toggleStaffShift('${s.uid}', true)" style="padding:0.25rem 0.5rem; font-size:0.75rem; cursor:pointer;">Clock In</button>`;
+
+        // Demote button (admins cannot demote themselves)
+        const demoteBtn = isSelf 
+          ? '' 
+          : `<button class="btn btn-outline" onclick="demoteStaff('${s.uid}')" style="padding:0.25rem 0.5rem; font-size:0.75rem; opacity:0.7; margin-left:0.25rem; cursor:pointer;">Remove</button>`;
+
+        return `
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:0.75rem 0;"><strong>${s.name || 'No Name'}</strong> ${isSelf ? '(You)' : ''}</td>
+            <td style="padding:0.75rem 0; opacity:0.8;">${s.email}</td>
+            <td style="padding:0.75rem 0;">${roleBadge}</td>
+            <td style="padding:0.75rem 0;">${statusText}</td>
+            <td style="padding:0.75rem 0; text-align:right;">
+              ${toggleBtn}
+              ${demoteBtn}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.toggleStaffShift = function(uid, workState) {
+      db.collection('users').doc(uid).update({
+        isWorking: workState,
+        lastShiftStart: workState ? firebase.firestore.FieldValue.serverTimestamp() : null
+      }).then(() => {
+        console.log(`Staff ${uid} shift state updated to ${workState}`);
+      }).catch(err => {
+        alert("Failed to update shift: " + err.message);
+      });
+    };
+
+    window.demoteStaff = function(uid) {
+      if (confirm("Are you sure you want to demote this staff member back to customer?")) {
+        db.collection('users').doc(uid).update({
+          role: 'customer',
+          isWorking: false
+        }).then(() => {
+          alert("Staff member demoted to customer successfully.");
+        }).catch(err => {
+          alert("Failed to demote staff: " + err.message);
+        });
+      }
+    };
+
+    // Helper adjustTabsForRole
+    function adjustTabsForRole(role) {
+      const allowedPanels = ['orders', 'floor-plan', 'inventory', 'staff', 'analytics', 'menu', 'bookings'];
+      $$('.admin-tab-btn').forEach(btn => {
+        const panel = btn.dataset.panel;
+        if (allowedPanels.includes(panel)) {
+          btn.style.setProperty('display', 'inline-block', 'important');
+        } else {
+          btn.style.setProperty('display', 'none', 'important');
+        }
+      });
+    }
+
+    // Daily Special Submit
+    const specialForm = $('#daily-special-form');
+    if (specialForm) {
+      specialForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const name = $('#special-name-input').value.trim();
+        const desc = $('#special-desc-input').value.trim();
+        const price = parseFloat($('#special-price-input').value);
+        const qty = parseInt($('#special-qty-input').value);
+        const image = $('#special-image-input').value.trim() || 'images/menu/burger_feature_1780513167495.png';
+        
+        const specialData = {
+          name: name,
+          description: desc,
+          price: price,
+          totalQuantity: qty,
+          image: image
+        };
+        
+        saveDailySpecial(specialData).then(() => {
+          specialForm.reset();
+        }).catch(err => {
+          showToast('Error saving daily special: ' + err.message, 'error');
+        });
+      });
+    }
+
+    // Unified Staff Account Creator Helper
+    async function createStaffAccount(formData) {
+      const { fullName, email, password, role, hourlyRate, phone } = formData;
+      const feedback = document.getElementById('create-staff-feedback');
+      
+      if (!fullName || !email || !password || !role) {
+        feedback.textContent = 'Name, email, password, and role are required.';
+        feedback.style.color = 'var(--error-red)';
+        return;
+      }
+      if (password.length < 8) {
+        feedback.textContent = 'Password must be at least 8 characters.';
+        feedback.style.color = 'var(--error-red)';
+        return;
+      }
+      if (!['kitchen', 'staff', 'admin'].includes(role)) {
+        feedback.textContent = 'Invalid role selected.';
+        feedback.style.color = 'var(--error-red)';
+        return;
+      }
+      
+      feedback.textContent = 'Creating account...';
+      feedback.style.color = '#e8a825';
+      
+      let secondaryApp;
+      try {
+        secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
+      } catch (err) {
+        secondaryApp = firebase.app("SecondaryApp");
+      }
+      
+      try {
+        const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, password);
+        const updates = {
+          uid: cred.user.uid,
+          name: fullName,
+          email: email,
+          role: role,
+          isWorking: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (hourlyRate) updates.hourlyRate = parseFloat(hourlyRate);
+        if (phone) updates.phone = phone;
+        
+        await db.collection('users').doc(cred.user.uid).set(updates);
+        
+        // Add audit log
+        await db.collection('auditLog').add({
+          action: 'create_staff_account',
+          performedBy: auth.currentUser ? auth.currentUser.uid : 'system',
+          performedByName: 'Admin Manager',
+          targetCollection: 'users',
+          targetId: cred.user.uid,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        feedback.textContent = `✓ Account created successfully for ${fullName}!`;
+        feedback.style.color = '#2ecc71';
+        
+        // Reset form fields
+        document.getElementById('create-staff-name').value = '';
+        document.getElementById('create-staff-email').value = '';
+        document.getElementById('create-staff-password').value = '';
+        if (document.getElementById('create-staff-hourly')) document.getElementById('create-staff-hourly').value = '';
+        if (document.getElementById('create-staff-phone')) document.getElementById('create-staff-phone').value = '';
+        
+        await secondaryApp.auth().signOut();
+        await secondaryApp.delete();
+      } catch (err) {
+        feedback.textContent = 'Error: ' + err.message;
+        feedback.style.color = 'var(--error-red)';
+        if (secondaryApp) {
+          try { await secondaryApp.delete(); } catch(e) {}
+        }
+      }
+    }
+    window.createStaffAccount = createStaffAccount;
+
+    // Create Staff Submit Listener
+    const createForm = $('#create-staff-form');
+    if (createForm) {
+      createForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const formData = {
+          fullName: $('#create-staff-name').value.trim(),
+          email: $('#create-staff-email').value.trim(),
+          password: $('#create-staff-password').value,
+          role: $('#create-staff-role').value,
+          hourlyRate: $('#create-staff-hourly') ? $('#create-staff-hourly').value : '',
+          phone: $('#create-staff-phone') ? $('#create-staff-phone').value : ''
+        };
+        createStaffAccount(formData);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── HELPER FUNCTIONS ─────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isStaff() {
+      return isSignedIn() && getUserRole() in ['kitchen', 'admin', 'superadmin'];
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && getUserRole() in ['admin', 'superadmin'];
+    }
+
+    // ─── ORDERS ───────────────────────────────────────────────────────────────
+    // Customers can read/write their own orders
+    // Kitchen & admin can read/write all orders
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isStaff()
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isStaff()
+      );
+      allow delete: if isAdmin();
+      
+      // Allow listing (for the WHERE userId == uid query)
+      allow list: if isSignedIn() && (
+        request.query.filters.size() > 0 || isStaff()
+      );
+    }
+
+    // ─── BOOKINGS ─────────────────────────────────────────────────────────────
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isStaff()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isStaff()
+      );
+      allow delete: if isAdmin();
+      allow list: if isSignedIn();
+    }
+
+    // ─── USERS ────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow delete: if isAdmin();
+      allow list: if isStaff();
+    }
+
+    // ─── TABLES ───────────────────────────────────────────────────────────────
+    // Tables are publicly readable (for live floor plan on customer site)
+    match /tables/{tableId} {
+      allow read, list: if true;
+      allow write: if isStaff();
+    }
+
+    // ─── MENU ─────────────────────────────────────────────────────────────────
+    match /menu/{itemId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─── DAILY SPECIALS ───────────────────────────────────────────────────────
+    match /dailySpecials/{docId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─── AUDIT LOG ────────────────────────────────────────────────────────────
+    match /auditLog/{logId} {
+      allow create: if isSignedIn();
+      allow read, list: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ─── INVENTORY ────────────────────────────────────────────────────────────
+    match /inventory/{itemId} {
+      allow read, list: if isSignedIn();
+      allow write: if isStaff();
+    }
+    
+    // ─── ROTA / SCHEDULES ─────────────────────────────────────────────────────
+    match /rota/{docId} {
+      allow read, list: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    match /schedules/{docId} {
+      allow read, list: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── NEWSLETTER ───────────────────────────────────────────────────────────
+    match /newsletter/{docId} {
+      allow create: if true;
+      allow read, list: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+  }
+}

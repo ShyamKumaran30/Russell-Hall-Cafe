@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Automated Live Checkout Test</title>
+  <style>
+    body { background: #000; color: #0f0; font-family: monospace; padding: 2rem; font-size: 14px; }
+    h1 { color: #fff; }
+    #log-container { border: 1px solid #333; padding: 1rem; height: 500px; overflow-y: scroll; background: #111; margin-bottom: 1rem; }
+    .log-entry { margin-bottom: 0.4rem; line-height: 1.4; }
+    .log-error { color: #f00; font-weight: bold; }
+    .log-success { color: #0f0; font-weight: bold; }
+    .log-info { color: #00f; }
+  </style>
+</head>
+<body>
+  <h1>Live Checkout Diagnostic Test</h1>
+  <div id="log-container"></div>
+  <div id="status" style="font-size: 1.5rem; font-weight: bold;">Initializing...</div>
+
+  <!-- Firebase compatibility scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  
+  <script>
+    // Console redirection to screen
+    const logContainer = document.getElementById('log-container');
+    const statusEl = document.getElementById('status');
+    
+    function log(msg, type = 'log') {
+      const el = document.createElement('div');
+      el.className = `log-entry log-${type}`;
+      el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logContainer.appendChild(el);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    window.addEventListener('error', (e) => {
+      log(`UNCAUGHT RUNTIME ERROR: ${e.message} at ${e.filename}:${e.lineno}`, 'error');
+      statusEl.textContent = "CRASHED";
+      statusEl.style.color = '#f00';
+    });
+
+    console.log = (m, ...args) => log(m + ' ' + args.join(' '), 'log');
+    console.error = (m, ...args) => log(m + ' ' + args.join(' '), 'error');
+    console.warn = (m, ...args) => log(m + ' ' + args.join(' '), 'warn');
+  </script>
+
+  <!-- Load Firebase config and application scripts -->
+  <script src="js/firebase-config.js?v=3.3.2"></script>
+  <script src="js/menu-data.js"></script>
+  <script src="js/app.js?v=3.3.2"></script>
+
+  <script>
+    // Test orchestrator
+    async function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    async function runCheckoutTest() {
+      statusEl.textContent = "Running diagnostic test...";
+      log("Initializing firebase verification...");
+      
+      if (typeof firebase === 'undefined' || !firebase.apps.length) {
+        log("Firebase failed to load!", "error");
+        return;
+      }
+      
+      log("Firebase is initialized. Checking auth state...");
+      
+      // 1. Force registration/login of a fresh test user
+      const email = `test_headless_${Math.floor(Math.random() * 10000)}@russellhalltest.com`;
+      const password = "HeadlessPassword123!";
+      
+      log(`Signing out any existing user first...`);
+      await firebase.auth().signOut();
+      
+      log(`Registering test user: ${email}...`);
+      try {
+        const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const uid = cred.user.uid;
+        log(`✓ Registered successfully! UID: ${uid}`, 'success');
+        
+        log(`Creating user profile in users collection...`);
+        await firebase.firestore().collection('users').doc(uid).set({
+          uid: uid,
+          email: email,
+          name: "Headless Tester",
+          role: "customer",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        log(`✓ User profile created in Firestore`, 'success');
+      } catch (err) {
+        log(`Registration failed: ${err.message}. Trying login...`, 'warn');
+        try {
+          await firebase.auth().signInWithEmailAndPassword(email, password);
+          log(`✓ Logged in successfully`, 'success');
+        } catch (loginErr) {
+          log(`Login failed: ${loginErr.message}`, 'error');
+          statusEl.textContent = "TEST FAILED";
+          return;
+        }
+      }
+
+      log("Waiting for app state sync...");
+      await sleep(2000);
+
+      // 2. Add item to cart
+      log("Populating cart with breakfast item...");
+      const testItem = {
+        id: "m1",
+        name: "Morning Glory Mega Breakfast",
+        price: 8.49,
+        qty: 1,
+        lineTotal: 8.49,
+        options: []
+      };
+      
+      // Inject directly into the app's cart array
+      // Note: app.js exposes cart as a local variable. Let's use the UI or local storage.
+      localStorage.setItem('rh_cafe_cart', JSON.stringify([testItem]));
+      log("Cart injected in localStorage. Reloading cart UI...");
+      
+      // Trigger cart load by reloading or calling internal function if exposed
+      window.location.reload();
+    }
+
+    // Run test when page is ready, check if cart is populated
+    window.addEventListener('load', async () => {
+      const cartData = localStorage.getItem('rh_cafe_cart');
+      if (cartData && JSON.parse(cartData).length > 0) {
+        // Step 2 of test (after reload): Place order
+        statusEl.textContent = "Placing cash order...";
+        log("Cart populated. Opening checkout modal...");
+        
+        await sleep(1500);
+        
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+          checkoutBtn.click();
+          log("✓ Checkout button clicked");
+        } else {
+          log("Checkout button not found in DOM!", "error");
+          return;
+        }
+        
+        await sleep(1000);
+        
+        // Populate step 1 form fields
+        log("Filling in step 1 form details...");
+        const nameInput = document.getElementById('cust-name');
+        const emailInput = document.getElementById('cust-email');
+        const phoneInput = document.getElementById('cust-phone');
+        
+        if (nameInput) nameInput.value = "Headless Tester";
+        if (emailInput) emailInput.value = firebase.auth().currentUser.email;
+        if (phoneInput) phoneInput.value = "07123456789";
+        
+        const next1Btn = document.getElementById('step1-next');
+        if (next1Btn) {
+          next1Btn.click();
+          log("✓ Clicked Step 1 Next button");
+        } else {
+          log("Step 1 Next button not found!", "error");
+          return;
+        }
+        
+        await sleep(1000);
+        
+        // Step 2 Next
+        const next2Btn = document.getElementById('step2-next');
+        if (next2Btn) {
+          next2Btn.click();
+          log("✓ Clicked Step 2 Next button");
+        } else {
+          log("Step 2 Next button not found!", "error");
+          return;
+        }
+        
+        await sleep(1000);
+        
+        // Select Cash payment card
+        log("Selecting Cash payment method...");
+        const cashCard = document.querySelector('.payment-option-card[data-method="cash"]');
+        if (cashCard) {
+          cashCard.click();
+          log("✓ Clicked Cash payment card");
+        } else {
+          log("Cash card not found!", "error");
+          return;
+        }
+        
+        await sleep(1000);
+        
+        // Click Pay button to submit
+        const payBtn = document.getElementById('pay-button');
+        if (payBtn) {
+          log(`Clicking Place Order button: "${payBtn.textContent.trim()}"...`);
+          payBtn.click();
+        } else {
+          log("Pay button not found!", "error");
+          return;
+        }
+        
+        // Wait for Firestore write response or processing timeout
+        for (let i = 0; i < 15; i++) {
+          await sleep(1000);
+          const confirmOverlay = document.getElementById('confirm-overlay');
+          if (confirmOverlay && confirmOverlay.classList.contains('open')) {
+            log("✓ Success! Order confirmation overlay is open!", "success");
+            statusEl.textContent = "TEST PASSED (ORDER SUCCESSFULLY CREATED)";
+            statusEl.style.color = '#0f0';
+            
+            // Clear test cart so we don't loop
+            localStorage.removeItem('rh_cafe_cart');
+            return;
+          }
+          
+          const errEl = document.getElementById('checkout-error');
+          if (errEl && errEl.style.display !== 'none' && errEl.textContent.trim()) {
+            log(`✗ Diagnostic Error message: ${errEl.textContent}`, "error");
+            statusEl.textContent = "TEST FAILED (CHECKOUT ERROR)";
+            statusEl.style.color = '#f00';
+            return;
+          }
+        }
+        
+        log("Timeout waiting for order confirmation screen.", "error");
+        statusEl.textContent = "TEST FAILED (TIMEOUT)";
+        statusEl.style.color = '#f00';
+      } else {
+        // Start fresh
+        runCheckoutTest();
+      }
+    });
+  </script>
+</body>
+</html>
