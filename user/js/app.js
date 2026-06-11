@@ -1643,23 +1643,41 @@
     if (event && event.preventDefault) event.preventDefault();
     const payButton = document.getElementById('pay-button');
     const errEl = document.getElementById('checkout-error');
-    if (errEl) errEl.textContent = '';
+    if (errEl) {
+      errEl.textContent = '';
+      errEl.style.display = 'none';
+    }
 
     // CRITICAL: Require login before placing any order so userId is always set
     if (!currentUser) {
-      if (errEl) errEl.textContent = 'Please log in or register before placing an order so your order history is saved.';
+      if (errEl) {
+        errEl.textContent = 'Please log in or register before placing an order so your order history is saved.';
+        errEl.style.display = 'block';
+      }
       openAuthModal();
       return;
     }
 
     if (currentPaymentMethod === 'cash') {
+      if (payButton) {
+        payButton.disabled = true;
+        payButton.innerHTML = `
+          <span style="
+            width:16px;height:16px;border-radius:50%;
+            border:2px solid rgba(0,0,0,0.3);border-top-color:#0d0d0d;
+            display:inline-block;animation:spin 0.8s linear infinite;
+            margin-right:0.5rem;vertical-align:middle;
+          "></span>
+          Processing...`;
+      }
+      
       goToStep('processing');
       const statusEl = document.getElementById('payment-status');
       if (statusEl) statusEl.textContent = 'Placing cash order...';
       await sleep(1000);
       
       const orderData = buildOrderData();
-      showConfirmation(orderData);
+      await showConfirmation(orderData);
       return;
     }
   }
@@ -1796,29 +1814,14 @@
       void path.offsetWidth;
       path.style.animation = '';
     }
-
-    // Start confetti
-    startConfetti();
-
-    // Reset tracking
-    currentTrackingStage = 0;
   }
 
   // --- CONFIRMATION ---
-  function showConfirmation(orderData) {
-    closeCheckout();
+  async function showConfirmation(orderData) {
     const savedItems = [...cart];
     const savedTotal = getTotal();
     const prepVal = orderData.prepTime || calculatePrepTime();
     
-    cart = [];
-    appliedCoupon = null;
-    serviceChargeEnabled = false;
-    tipAmount = 0; // Reset tip for next checkout
-    saveCart();
-    updateCartBadge();
-    renderOrderGrid();
-
     lastOrderNum = '#' + (1000 + Math.floor(Math.random() * 9000));
     const orderId = lastOrderNum.replace('#', '');
 
@@ -1861,11 +1864,21 @@
       };
     }
 
-    renderConfirmationScreen(orderDoc, savedItems, savedTotal, prepVal, 'cash');
-
-    console.log('[Firebase] Saving order:', orderId, 'userId:', currentUser.uid);
-    db.collection('orders').doc(orderId).set(orderDoc).then(() => {
-      console.log('[Firebase] ✓ Order saved to Firestore successfully! Doc ID:', orderId);
+    try {
+      console.log('[Firebase] Saving cash order:', orderId, 'userId:', currentUser.uid);
+      await db.collection('orders').doc(orderId).set(orderDoc);
+      console.log('[Firebase] ✓ Cash order saved to Firestore successfully! Doc ID:', orderId);
+      
+      closeCheckout();
+      cart = [];
+      appliedCoupon = null;
+      serviceChargeEnabled = false;
+      tipAmount = 0; // Reset tip for next checkout
+      saveCart();
+      updateCartBadge();
+      renderOrderGrid();
+      
+      renderConfirmationScreen(orderDoc, savedItems, savedTotal, prepVal, 'cash');
       showToast('Order saved to your account ✓');
       
       // Decrement daily specials if order contains today's special
@@ -1880,10 +1893,27 @@
       } catch (e) {
         console.error(e);
       }
-    }).catch(err => {
-      console.error('[Firebase] ✗ Error saving order to Firestore:', err.code, err.message);
-      showToast('⚠ Order could not be saved: ' + (err.code === 'permission-denied' ? 'Firestore rules need updating. See firestore.rules file.' : err.message));
-    });
+      
+      // Start confetti
+      startConfetti();
+      // Reset tracking
+      currentTrackingStage = 0;
+      
+    } catch (err) {
+      console.error('[Firebase] ❌ Error saving cash order:', err);
+      // Go back to checkout and show error
+      goToStep(3);
+      const errEl = document.getElementById('checkout-error') || document.getElementById('stripe-error');
+      if (errEl) {
+        errEl.textContent = `Error placing order: ${err.message || 'Database write failed'}. Please try again.`;
+        errEl.style.display = 'block';
+      }
+      const payButton = document.getElementById('pay-button');
+      if (payButton) {
+        payButton.disabled = false;
+        payButton.textContent = 'Confirm Order';
+      }
+    }
   }
 
   // --- CONFETTI ---
@@ -2850,6 +2880,16 @@
     const authEmail = (currentUser && currentUser.email) ? currentUser.email.toLowerCase().trim() : '';
     const profileEmail = (currentUserProfile && currentUserProfile.email) ? currentUserProfile.email.toLowerCase().trim() : '';
 
+    const emailsToQuery = new Set();
+    if (authEmail) emailsToQuery.add(authEmail);
+    if (profileEmail) emailsToQuery.add(profileEmail);
+    
+    // Cross-account fallback: if they use one of the shyamgjk accounts, search both to link legacy orders
+    if (authEmail.includes('shyamgjk') || profileEmail.includes('shyamgjk')) {
+      emailsToQuery.add('shyamgjk@gmail.com');
+      emailsToQuery.add('shyamgjk3@gmail.com');
+    }
+
     // Show loading state immediately
     const ordersList = $('#orders-history-list');
     if (ordersList) ordersList.innerHTML = '<p class="empty-msg">Loading your orders...</p>';
@@ -2869,9 +2909,9 @@
         const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
         return tB - tA;
       });
-      // Auto-patch orders that are missing userId so future queries work
+      // Auto-patch orders that are missing userId or have a different userId so future queries work
       orders.forEach(o => {
-        if (!o.userId && o.id) {
+        if (o.userId !== uid && o.id) {
           db.collection('orders').doc(o.id).update({ userId: uid }).catch(() => {});
         }
       });
@@ -2890,19 +2930,14 @@
 
         // Also fetch by email in parallel (these are one-time gets, not listeners)
         const emailQueries = [];
-        if (authEmail) {
+        emailsToQuery.forEach(email => {
           emailQueries.push(
-            db.collection('orders').where('customerDetails.email', '==', authEmail).get()
+            db.collection('orders').where('customerDetails.email', '==', email).get()
           );
           emailQueries.push(
-            db.collection('orders').where('userEmail', '==', authEmail).get()
+            db.collection('orders').where('userEmail', '==', email).get()
           );
-        }
-        if (profileEmail && profileEmail !== authEmail) {
-          emailQueries.push(
-            db.collection('orders').where('customerDetails.email', '==', profileEmail).get()
-          );
-        }
+        });
 
         const emailSnapshots = await Promise.allSettled(emailQueries);
         const allDocs = [...primaryDocs];
@@ -2918,10 +2953,10 @@
         // On permission error, try email-only fallback
         if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
           const fallbacks = [];
-          if (authEmail) {
-            fallbacks.push(db.collection('orders').where('customerDetails.email', '==', authEmail).get());
-            fallbacks.push(db.collection('orders').where('userEmail', '==', authEmail).get());
-          }
+          emailsToQuery.forEach(email => {
+            fallbacks.push(db.collection('orders').where('customerDetails.email', '==', email).get());
+            fallbacks.push(db.collection('orders').where('userEmail', '==', email).get());
+          });
           Promise.allSettled(fallbacks).then(results => {
             const allDocs = [];
             results.forEach(r => { if (r.status === 'fulfilled') r.value.docs.forEach(d => allDocs.push(d)); });

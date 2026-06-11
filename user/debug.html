@@ -98,6 +98,8 @@
           const orderEmail = (d.customerDetails?.email || d.userEmail || '').toLowerCase().trim();
           const userEmail = user.email.toLowerCase().trim();
           const isTestOrder = doc.id.startsWith('test_') || (d.orderId || '').startsWith('test_');
+          const isUserEmailMatch = orderEmail === userEmail || 
+                                   (orderEmail.includes('shyamgjk') && userEmail.includes('shyamgjk'));
 
           if (d.userId === user.uid) {
             alreadyYours++;
@@ -105,11 +107,14 @@
           } else if (isTestOrder) {
             skipped++;
             log(`  ⏭️ Order ${doc.id} — skipped (test order)`, 'info');
-          } else {
+          } else if (isUserEmailMatch) {
             // Link this order to current user
             batch.update(doc.ref, { userId: user.uid });
             fixed++;
             log(`  🔗 Order ${doc.id} (placed by: ${orderEmail || 'unknown'}) → linking to your account`, 'warn');
+          } else {
+            skipped++;
+            log(`  ⏭️ Order ${doc.id} (placed by: ${orderEmail || 'unknown'}) — skipped (other customer)`, 'info');
           }
         });
 
