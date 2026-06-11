@@ -1540,6 +1540,7 @@
         const orderDoc = {
           orderId: docId,
           userId: currentUser.uid,
+          userEmail: currentUser.email || '',
           customerDetails: {
             name: orderData.name,
             email: orderData.email,
@@ -1824,6 +1825,7 @@
     const orderDoc = {
       orderId: orderId,
       userId: currentUser.uid,
+      userEmail: currentUser.email || '',
       customerDetails: {
         name: orderData.name,
         email: orderData.email,
@@ -2845,6 +2847,12 @@
   }
 
   function fetchUserOrders(uid) {
+    const userEmail = (currentUser && currentUser.email) ? currentUser.email : '';
+    
+    // Show loading state immediately
+    const ordersList = $('#orders-history-list');
+    if (ordersList) ordersList.innerHTML = '<p class="empty-msg">Loading your orders...</p>';
+
     return db.collection('orders')
       .where('userId', '==', uid)
       .onSnapshot(snapshot => {
@@ -2861,9 +2869,61 @@
         const ordersList = $('#orders-history-list');
         if (ordersList) {
           if (orders.length === 0) {
-            ordersList.innerHTML = `<p class="empty-msg">No previous orders found.</p>`;
+            // Fallback: try searching by email for orders placed before userId was saved
+            if (userEmail) {
+              db.collection('orders')
+                .where('customerDetails.email', '==', userEmail)
+                .get()
+                .then(emailSnap => {
+                  const emailOrders = [];
+                  emailSnap.forEach(doc => emailOrders.push({ id: doc.id, ...doc.data() }));
+                  emailOrders.sort((a, b) => {
+                    const tA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+                    const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+                    return tB - tA;
+                  });
+                  if (emailOrders.length > 0) {
+                    // Patch userId on these old orders so future queries work
+                    emailOrders.forEach(o => {
+                      if (!o.userId) {
+                        db.collection('orders').doc(o.id).update({ userId: uid }).catch(() => {});
+                      }
+                    });
+                    renderOrdersList(emailOrders);
+                  } else {
+                    if (ordersList) ordersList.innerHTML = '<p class="empty-msg">No previous orders found. Orders appear here after you place one while logged in.</p>';
+                  }
+                }).catch(() => {
+                  if (ordersList) ordersList.innerHTML = '<p class="empty-msg">No previous orders found.</p>';
+                });
+            } else {
+              if (ordersList) ordersList.innerHTML = '<p class="empty-msg">No previous orders found.</p>';
+            }
           } else {
-            ordersList.innerHTML = orders.map(o => {
+            renderOrdersList(orders);
+          }
+        }
+      }, error => {
+        console.error('[Firebase] Orders fetch error:', error.code, error.message);
+        const ordersList = $('#orders-history-list');
+        if (ordersList) {
+          let msg = 'Failed to load orders.';
+          if (error.code === 'permission-denied') {
+            msg = '⚠️ Access denied — Firestore rules not deployed. Go to Firebase Console → Firestore → Rules and publish them.';
+          } else if (error.code === 'failed-precondition') {
+            msg = '⚠️ Database index required — Please contact support to deploy Firestore indexes.';
+          } else {
+            msg = '⚠️ ' + (error.message || 'Unknown error loading orders.');
+          }
+          ordersList.innerHTML = `<p class="empty-msg" style="color:#e74c3c;">${msg}</p>`;
+        }
+      });
+  }
+
+  function renderOrdersList(orders) {
+    const ordersList = $('#orders-history-list');
+    if (!ordersList) return;
+    ordersList.innerHTML = orders.map(o => {
               const dateStr = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString() : 'Recent';
               const vatVal = o.vat || 0;
               const tipVal = o.tip || 0;
@@ -2966,24 +3026,7 @@
                   </div>
                 </div>
               `;
-            }).join('');
-          }
-        }
-      }, error => {
-        console.error('[Firebase] Orders fetch error:', error.code, error.message);
-        const ordersList = $('#orders-history-list');
-        if (ordersList) {
-          let msg = 'Failed to load orders.';
-          if (error.code === 'permission-denied') {
-            msg = '⚠️ Access denied — Firestore security rules need updating. Contact support.';
-          } else if (error.code === 'failed-precondition') {
-            msg = '⚠️ Database index required. Check browser console for a link to create it, or contact support.';
-          } else {
-            msg = '⚠️ ' + (error.message || 'Unknown error loading orders.');
-          }
-          ordersList.innerHTML = `<p class="empty-msg" style="color:#e74c3c;">${msg}</p>`;
-        }
-      });
+    }).join('');
   }
 
   function initAuthAndBookings() {
@@ -4260,6 +4303,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
     const orderDoc = {
       orderId: docId,
       userId: currentUser.uid,
+      userEmail: currentUser.email || '',
       customerDetails: {
         name: orderData.name,
         email: orderData.email,
