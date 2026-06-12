@@ -1050,27 +1050,71 @@
         <p class="error-msg" id="login-error" style="color:var(--error-red);margin-top:0.5rem;font-size:0.82rem;text-align:center"></p>
       </form>
 
-      <!-- Register Form -->
-      <form id="register-form" class="auth-form hidden">
-        <div class="form-group">
-          <label for="register-name">Full Name</label>
-          <input type="text" id="register-name" required placeholder="John Doe">
+      <!-- Register Form Container -->
+      <div id="register-container">
+        <!-- Register Form -->
+        <form id="register-form" class="auth-form hidden">
+          <div class="form-group">
+            <label for="register-name">Full Name</label>
+            <input type="text" id="register-name" required placeholder="John Doe">
+          </div>
+          <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" required placeholder="email@example.com">
+          </div>
+          <div class="form-group">
+            <label for="register-phone">Phone Number</label>
+            <input type="tel" id="register-phone" required placeholder="07xxx xxx xxx">
+          </div>
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" required placeholder="Min 8 chars, A-Z, a-z, 0-9, special">
+          </div>
+          
+          <!-- Verification Toggle Option -->
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label style="margin-bottom: 0.25rem;">Verification Method</label>
+            <div style="display: flex; gap: 1.5rem; margin-top: 0.25rem;">
+              <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.85rem; opacity: 0.9;">
+                <input type="radio" name="reg-verify-method" value="email" checked style="accent-color: var(--gold);"> Verify via Email
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.85rem; opacity: 0.9;">
+                <input type="radio" name="reg-verify-method" value="phone" style="accent-color: var(--gold);"> Verify via SMS OTP
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-gold" style="width: 100%; margin-top: 1rem;">Register</button>
+          <p class="error-msg" id="register-error" style="color:var(--error-red);margin-top:0.5rem;font-size:0.82rem;text-align:center"></p>
+        </form>
+
+        <!-- Verification Step Overlay -->
+        <div id="register-verify-step" class="hidden" style="padding: 1rem 0; text-align: center;">
+          <h3 id="verify-step-title" style="font-family:'Playfair Display',serif; color:var(--gold); margin-bottom: 0.75rem; font-size: 1.3rem;">Verification Required</h3>
+          <p id="verify-step-msg" style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 1.5rem; line-height: 1.5; color: var(--cream);"></p>
+          
+          <!-- SMS OTP input container -->
+          <div id="verify-otp-container" class="hidden" style="margin-bottom: 1.5rem;">
+            <div class="form-group" style="max-width: 200px; margin: 0 auto;">
+              <input type="text" id="verify-otp-input" placeholder="------" maxlength="6" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.25rem; font-family: 'Oswald', sans-serif; background: #111; border: 1px solid var(--gold); border-radius: 6px; color: #fff;">
+            </div>
+            <button type="button" id="verify-otp-btn" class="btn btn-gold" style="margin-top: 1rem; width: 100%;">Verify OTP & Complete Register</button>
+          </div>
+
+          <!-- Email status container -->
+          <div id="verify-email-container" class="hidden" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1.25rem; color: var(--gold); font-size: 0.88rem;">
+              <span style="width:14px; height:14px; border:2px solid #222; border-top-color:var(--gold); border-radius:50%; display:inline-block; animation:spin 0.8s linear infinite;"></span>
+              Waiting for email verification...
+            </div>
+            <button type="button" id="verify-email-check-btn" class="btn btn-gold" style="width: 100%; margin-bottom: 0.75rem;">I Have Verified</button>
+            <button type="button" id="verify-email-resend-btn" class="btn btn-outline" style="width: 100%;">Resend Verification Link</button>
+          </div>
+
+          <button type="button" id="verify-back-btn" class="btn btn-outline" style="width: 100%; margin-top: 0.5rem; border-color: #555; color: #bbb;">Cancel & Go Back</button>
+          <p id="verify-error" class="error-msg" style="color:var(--error-red); margin-top: 0.75rem; font-size: 0.82rem; display: none;"></p>
         </div>
-        <div class="form-group">
-          <label for="register-email">Email</label>
-          <input type="email" id="register-email" required placeholder="email@example.com">
-        </div>
-        <div class="form-group">
-          <label for="register-phone">Phone Number</label>
-          <input type="tel" id="register-phone" required placeholder="07xxx xxx xxx">
-        </div>
-        <div class="form-group">
-          <label for="register-password">Password</label>
-          <input type="password" id="register-password" required placeholder="Min 8 chars, A-Z, a-z, 0-9, special">
-        </div>
-        <button type="submit" class="btn btn-gold" style="width: 100%; margin-top: 1rem;">Register</button>
-        <p class="error-msg" id="register-error" style="color:var(--error-red);margin-top:0.5rem;font-size:0.82rem;text-align:center"></p>
-      </form>
+      </div>
       
       <div class="modal-actions" style="margin-top: 1rem; justify-content: center;">
         <button class="btn btn-outline" id="auth-cancel">Close</button>

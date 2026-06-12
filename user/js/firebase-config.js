@@ -94,11 +94,12 @@ async function universalLogin(email, password, expectedPortal) {
     const userData = userDoc.data();
     const role = userData.role;
     
-    if (role === 'customer' && !user.emailVerified) {
+    const isPhoneVerified = userData && userData.phoneVerified === true;
+    if (role === 'customer' && !user.emailVerified && !isPhoneVerified) {
       await firebase.auth().signOut();
       throw {
         code: 'auth/unverified-email',
-        message: 'Your email address is not verified. Please verify your email before logging in. We have sent a verification email; please check your inbox.'
+        message: 'Your account is not verified. Please verify your email or phone before logging in.'
       };
     }
     

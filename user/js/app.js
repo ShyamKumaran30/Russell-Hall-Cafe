@@ -1233,11 +1233,14 @@
       openAuthModal();
       return;
     }
-    if (!currentUser.emailVerified) {
-      showToast('Please verify your email address to checkout.');
-      auth.signOut();
-      openAuthModal();
-      return;
+    if (currentUser) {
+      const isPhoneVerified = currentUserProfile && currentUserProfile.phoneVerified === true;
+      if (!currentUser.emailVerified && !isPhoneVerified) {
+        showToast('Please verify your email or phone to checkout.');
+        auth.signOut();
+        openAuthModal();
+        return;
+      }
     }
     closeCart();
     const orderType = document.querySelector('input[name="order-type"]:checked');
@@ -3191,12 +3194,15 @@
       }
 
       if (user) {
-        // Enforce email verification check for customers
+        // Enforce verification check for customers
         if (!user.emailVerified) {
           try {
             const userDoc = await db.collection('users').doc(user.uid).get();
-            const role = userDoc.exists ? (userDoc.data().role || 'customer') : 'customer';
-            if (role === 'customer') {
+            const userData = userDoc.exists ? userDoc.data() : null;
+            const role = userData ? (userData.role || 'customer') : 'customer';
+            const isPhoneVerified = userData ? (userData.phoneVerified === true) : false;
+            
+            if (role === 'customer' && !isPhoneVerified) {
               console.log("[Auth] Unverified customer session detected. Signing out.");
               currentUser = null;
               currentUserProfile = null;
@@ -3205,7 +3211,7 @@
               return;
             }
           } catch (err) {
-            console.error("Error checking verification role:", err);
+            console.error("Error checking verification status:", err);
           }
         }
 
@@ -3285,6 +3291,10 @@
       universalLogin(email, password, 'customer');
     });
 
+    // Verification State Variables
+    let pendingRegData = null;
+    let emailCheckInterval = null;
+
     $('#register-form')?.addEventListener('submit', e => {
       e.preventDefault();
       const name = $('#register-name').value.trim();
@@ -3292,9 +3302,10 @@
       const phone = $('#register-phone').value.trim();
       const password = $('#register-password').value;
       const errorEl = $('#register-error');
+      
       if (errorEl) {
         errorEl.textContent = '';
-        errorEl.style.color = '#e74c3c';
+        errorEl.style.color = 'var(--error-red)';
       }
 
       if (!name || !email || !phone || !password) {
@@ -3320,7 +3331,7 @@
       if (password.length < 8 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
         if (errorEl) {
           errorEl.innerHTML = `Password must be at least 8 characters long and include:
-            <ul style="margin:0.25rem 0 0 1rem; padding:0; text-align:left; font-size:0.8rem;">
+            <ul style="margin:0.25rem 0 0 1rem; padding:0; text-align:left; font-size:0.8rem; color: var(--error-red);">
               <li>At least one uppercase letter (A-Z)</li>
               <li>At least one lowercase letter (a-z)</li>
               <li>At least one number (0-9)</li>
@@ -3331,52 +3342,235 @@
         return;
       }
 
-      // Update input field with formatted phone
+      // Format and store values
       $('#register-phone').value = phoneResult.formatted;
+      const verifyMethod = document.querySelector('input[name="reg-verify-method"]:checked').value;
 
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(cred => {
-          // Send verification email
-          cred.user.sendEmailVerification().catch(err => {
-            console.error("Error sending verification email:", err);
+      pendingRegData = {
+        name,
+        email,
+        phone: phoneResult.formatted,
+        password,
+        verifyMethod
+      };
+
+      // Proceed to Verification Step
+      showRegisterVerificationStep();
+    });
+
+    function showRegisterVerificationStep() {
+      if (!pendingRegData) return;
+      $('#register-form').classList.add('hidden');
+      $('#register-verify-step').classList.remove('hidden');
+      $('#verify-error').style.display = 'none';
+
+      const titleEl = $('#verify-step-title');
+      const msgEl = $('#verify-step-msg');
+      const otpContainer = $('#verify-otp-container');
+      const emailContainer = $('#verify-email-container');
+
+      otpContainer.classList.add('hidden');
+      emailContainer.classList.add('hidden');
+
+      if (pendingRegData.verifyMethod === 'email') {
+        titleEl.textContent = "Verify Your Email";
+        msgEl.innerHTML = `We are registering your account. A verification link will be sent to <strong>${pendingRegData.email}</strong>. Please check your inbox and verify before clicking complete.`;
+        emailContainer.classList.remove('hidden');
+        
+        // Create user in firebase in background to send verification email
+        auth.createUserWithEmailAndPassword(pendingRegData.email, pendingRegData.password)
+          .then(cred => {
+            // Store user doc but keep unverified or sign out
+            return cred.user.sendEmailVerification();
+          })
+          .then(() => {
+            console.log("Verification email sent successfully.");
+            // Auto check email verification status in background
+            startEmailVerificationWatcher();
+          })
+          .catch(err => {
+            $('#verify-error').textContent = err.message;
+            $('#verify-error').style.display = 'block';
           });
+      } else {
+        // SMS Verification
+        titleEl.textContent = "Verify Your Phone Number";
+        msgEl.innerHTML = `Enter the 6-digit OTP verification code sent to your mobile <strong>${pendingRegData.phone}</strong>.`;
+        otpContainer.classList.remove('hidden');
+        $('#verify-otp-input').value = '';
+        
+        // Show simulated OTP code in toast for developer/user convenience
+        const simulatedOTP = Math.floor(100000 + Math.random() * 900000);
+        pendingRegData.simulatedOTP = simulatedOTP.toString();
+        setTimeout(() => {
+          showToast(`[SMS Sim] Verification code: ${simulatedOTP}`);
+        }, 1200);
+      }
+    }
 
-          return db.collection('users').doc(cred.user.uid).set({
-            uid: cred.user.uid,
-            name: name,
-            email: email,
-            phone: phoneResult.formatted,
-            role: 'customer',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        })
-        .then(() => {
-          // Sign out immediately so they cannot log in yet
-          auth.signOut();
+    function startEmailVerificationWatcher() {
+      if (emailCheckInterval) clearInterval(emailCheckInterval);
+      emailCheckInterval = setInterval(async () => {
+        const user = auth.currentUser;
+        if (user) {
+          await user.reload();
+          if (user.emailVerified) {
+            clearInterval(emailCheckInterval);
+            completeRegistration();
+          }
+        }
+      }, 3000);
+    }
 
+    async function checkEmailVerificationManually() {
+      const user = auth.currentUser;
+      const errorEl = $('#verify-error');
+      if (errorEl) errorEl.style.display = 'none';
+
+      if (user) {
+        await user.reload();
+        if (user.emailVerified) {
+          if (emailCheckInterval) clearInterval(emailCheckInterval);
+          completeRegistration();
+        } else {
           if (errorEl) {
-            errorEl.style.color = '#2ecc71';
-            errorEl.innerHTML = `<span style="font-weight:600; display:block; margin-bottom:0.5rem;">✓ Registration successful!</span>
-              A verification email has been sent to <strong>${email}</strong>. Please check your inbox and verify your email before logging in.`;
+            errorEl.textContent = "Email is not verified yet. Please click the link inside the verification email first.";
             errorEl.style.display = 'block';
           }
+        }
+      } else {
+        // Attempt signing in with registration password to check status
+        if (pendingRegData) {
+          try {
+            const cred = await auth.signInWithEmailAndPassword(pendingRegData.email, pendingRegData.password);
+            if (cred.user.emailVerified) {
+              completeRegistration();
+            } else {
+              await auth.signOut();
+              if (errorEl) {
+                errorEl.textContent = "Email is not verified yet. Please check your inbox.";
+                errorEl.style.display = 'block';
+              }
+            }
+          } catch (err) {
+            if (errorEl) {
+              errorEl.textContent = err.message;
+              errorEl.style.display = 'block';
+            }
+          }
+        }
+      }
+    }
 
-          // Clear form fields
-          $('#register-name').value = '';
-          $('#register-email').value = '';
-          $('#register-phone').value = '';
-          $('#register-password').value = '';
+    async function resendEmailVerificationLink() {
+      const user = auth.currentUser;
+      const errorEl = $('#verify-error');
+      if (errorEl) errorEl.style.display = 'none';
 
-          showToast('✓ Registration successful! Verification email sent.');
+      try {
+        if (user) {
+          await user.sendEmailVerification();
+          showToast('✓ Verification email resent successfully!');
+        } else if (pendingRegData) {
+          const cred = await auth.signInWithEmailAndPassword(pendingRegData.email, pendingRegData.password);
+          await cred.user.sendEmailVerification();
+          await auth.signOut();
+          showToast('✓ Verification email resent successfully!');
+        }
+      } catch (err) {
+        if (errorEl) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = 'block';
+        }
+      }
+    }
+
+    function verifySMSOTP() {
+      const code = $('#verify-otp-input').value.trim();
+      const errorEl = $('#verify-error');
+      if (errorEl) errorEl.style.display = 'none';
+
+      if (!pendingRegData || code !== pendingRegData.simulatedOTP) {
+        if (errorEl) {
+          errorEl.textContent = "Invalid code. Please check and try again.";
+          errorEl.style.display = 'block';
+        }
+        return;
+      }
+
+      // Create firebase auth user for phone auth registration path
+      auth.createUserWithEmailAndPassword(pendingRegData.email, pendingRegData.password)
+        .then(() => {
+          completeRegistration(true); // pass true to set phoneVerified in profile
         })
         .catch(err => {
           if (errorEl) {
-            errorEl.style.color = '#e74c3c';
             errorEl.textContent = err.message;
             errorEl.style.display = 'block';
           }
         });
-    });
+    }
+
+    async function completeRegistration(phoneVerified = false) {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        // Save profile data
+        await db.collection('users').doc(user.uid).set({
+          uid: user.uid,
+          name: pendingRegData.name,
+          email: pendingRegData.email,
+          phone: pendingRegData.phone,
+          role: 'customer',
+          phoneVerified: phoneVerified,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Sign out so they can log in normally
+        await auth.signOut();
+        
+        // Reset view
+        $('#register-verify-step').classList.add('hidden');
+        $('#register-form').classList.remove('hidden');
+        
+        // Clear forms
+        $('#register-name').value = '';
+        $('#register-email').value = '';
+        $('#register-phone').value = '';
+        $('#register-password').value = '';
+        pendingRegData = null;
+
+        showToast('✓ Registration complete! You can now log in.');
+        closeAuthModal();
+      } catch (err) {
+        const errorEl = $('#verify-error');
+        if (errorEl) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = 'block';
+        }
+      }
+    }
+
+    function cancelVerification() {
+      if (emailCheckInterval) clearInterval(emailCheckInterval);
+      
+      // Delete temporary firebase auth user if it was created during email verification
+      const user = auth.currentUser;
+      if (user) {
+        user.delete().catch(err => console.log("Clean user delete skipped:", err));
+      }
+
+      pendingRegData = null;
+      $('#register-verify-step').classList.add('hidden');
+      $('#register-form').classList.remove('hidden');
+    }
+
+    // Assign event listeners
+    $('#verify-otp-btn')?.addEventListener('click', verifySMSOTP);
+    $('#verify-email-check-btn')?.addEventListener('click', checkEmailVerificationManually);
+    $('#verify-email-resend-btn')?.addEventListener('click', resendEmailVerificationLink);
+    $('#verify-back-btn')?.addEventListener('click', cancelVerification);
 
     $('#auth-cancel')?.addEventListener('click', closeAuthModal);
     $('#auth-modal')?.addEventListener('click', e => {
