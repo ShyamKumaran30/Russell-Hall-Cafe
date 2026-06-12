@@ -1291,16 +1291,6 @@
     // Update input field with formatted phone
     $('#cust-phone').value = phoneResult.formatted;
 
-    const orderType = $('#order-type-checkout').value;
-    if (orderType === 'delivery') {
-      const addr = $('#del-address');
-      const city = $('#del-city');
-      const zip = $('#del-zip');
-      if (!addr || !city || !zip || !addr.value.trim() || !city.value.trim() || !zip.value.trim()) {
-        errEl.textContent = 'Please fill in all delivery address fields.';
-        return false;
-      }
-    }
     errEl.textContent = '';
     return true;
   }
