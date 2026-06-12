@@ -1228,6 +1228,17 @@
   // --- CHECKOUT ---
   function openCheckout() {
     if (!cart.length) { showToast('Your cart is empty!'); return; }
+    if (!currentUser) {
+      showToast('Please log in or register to place your order.');
+      openAuthModal();
+      return;
+    }
+    if (!currentUser.emailVerified) {
+      showToast('Please verify your email address to checkout.');
+      auth.signOut();
+      openAuthModal();
+      return;
+    }
     closeCart();
     const orderType = document.querySelector('input[name="order-type"]:checked');
     if (orderType) $('#order-type-checkout').value = orderType.value;
