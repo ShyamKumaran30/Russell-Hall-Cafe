@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#e8a825">
   
   <!-- Canonical Link -->
-  <link rel="canonical" href="http://localhost:3001/">
+  <link rel="canonical" href="https://russell-hall-cafe-user.pages.dev/">
   
   <!-- Apple Web App & Icon Details -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,8 +21,8 @@
   <!-- Open Graph / Facebook -->
   <meta property="og:title" content="Russell Hall Café | All-Day Brunch, Gourmet Burgers & Specialty Coffee">
   <meta property="og:description" content="Russell Hall Café — your neighbourhood spot for all-day brunch, gourmet burgers, toasties and speciality coffee. Order online, book a table and track your food in real time.">
-  <meta property="og:image" content="images/hero.jpg">
-  <meta property="og:url" content="http://localhost:3001/">
+  <meta property="og:image" content="https://russell-hall-cafe-user.pages.dev/images/hero.jpg">
+  <meta property="og:url" content="https://russell-hall-cafe-user.pages.dev/">
   <meta property="og:type" content="restaurant">
   <meta property="og:site_name" content="Russell Hall Café">
   <meta property="og:locale" content="en_GB">
@@ -31,7 +31,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Russell Hall Café | All-Day Brunch, Gourmet Burgers & Specialty Coffee">
   <meta name="twitter:description" content="Russell Hall Café — your neighbourhood spot for all-day brunch, gourmet burgers, toasties and speciality coffee. Order online, book a table and track your food in real time.">
-  <meta name="twitter:image" content="images/hero.jpg">
+  <meta name="twitter:image" content="https://russell-hall-cafe-user.pages.dev/images/hero.jpg">
 
   <!-- Preloading Critical Resources -->
   <link rel="preload" href="images/hero.jpg" as="image">
@@ -159,7 +159,6 @@
       <li><a href="#hours" data-scroll>Hours</a></li>
       <li><a href="#contact" data-scroll>Contact</a></li>
       <li><a href="#" id="nav-track-order-btn">Track Order <span id="active-orders-badge" style="display:none; background:#e74c3c; color:#fff; border-radius:50%; width:18px; height:18px; font-size:0.75rem; justify-content:center; align-items:center; margin-left:0.35rem; font-weight:bold;">0</span></a></li>
-      <li><a href="#" id="nav-live-tables-btn" onclick="openLiveTablesView()">Live Tables <span id="nav-live-tables-status-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#27ae60; margin-left:0.35rem; animation: livePulse 1.5s infinite; vertical-align: middle; transition: background 0.3s;"></span></a></li>
       
       <!-- CTA Action Buttons -->
       <li class="nav-cta-item"><a href="#contact" class="btn btn-outline nav-book-btn" data-scroll>Book a Table</a></li>
@@ -342,10 +341,10 @@
       </div>
     </div>
     <div class="about-video-wrap reveal">
-      <video autoplay muted loop playsinline poster="images/interior.jpg">
-        <source src="video/about-video.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
+      <img src="images/interior.jpg" 
+           alt="Russell Hall Café warm interior seating area" 
+           style="width:100%;border-radius:8px;object-fit:cover"
+           loading="lazy">
     </div>
   </section>
 
@@ -568,7 +567,7 @@
         <a href="#about" style="color:var(--cream); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--cream)'">OUR STORY</a>
         <a href="#hours" style="color:var(--cream); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--cream)'">OPENING HOURS</a>
         <a href="#gallery" style="color:var(--cream); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--cream)'">GALLERY</a>
-        <a href="#" onclick="event.preventDefault(); document.getElementById('auth-modal-btn')?.click();" style="color:var(--cream); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--cream)'">STAFF PORTAL</a>
+        <a href="https://russell-hall-cafe-admin.pages.dev/" target="_blank" rel="noopener" style="color:var(--cream); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--cream)'">STAFF PORTAL</a>
       </div>
 
       <!-- Divider line -->
@@ -1095,7 +1094,6 @@
         <div class="dashboard-tabs">
           <button class="dash-tab-btn active" data-dash="orders">Order History</button>
           <button class="dash-tab-btn" data-dash="bookings">Table Bookings</button>
-          <button class="dash-tab-btn" data-dash="live-tables">Live Tables</button>
         </div>
         
         <!-- Order History List -->
@@ -1110,16 +1108,6 @@
           <div id="bookings-history-list" style="max-height: 45vh; overflow-y: auto;">
             <p class="empty-msg">No upcoming or past reservations.</p>
           </div>
-        </div>
-
-        <!-- Live Tables Section -->
-        <div id="dash-live-tables-section" class="dash-section hidden">
-          <div style="text-align: center; margin-bottom: 1rem;">
-            <h4 style="font-family: 'Oswald', sans-serif; color: var(--gold); letter-spacing: 0.05em; text-transform: uppercase;">Live Table Availability</h4>
-            <p style="font-size: 0.82rem; opacity: 0.75; margin: 0.25rem 0 0 0;">View current table occupancies or tap "Book a Table" below to reserve.</p>
-          </div>
-          <div id="dash-booking-status-banner" style="margin-top: 1rem; display: none;"></div>
-          <div id="customer-floor-map-dash" style="margin-top: 1rem; width: 100%; height: auto; overflow: hidden;"></div>
         </div>
       </div>
 
@@ -1246,9 +1234,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="js/firebase-config.js?v=3.3.3"></script>
+  <script src="js/firebase-config.js?v=3.3.4"></script>
 
   <script src="js/menu-data.js"></script>
-  <script src="js/app.js?v=3.3.3"></script>
+  <script src="js/app.js?v=3.3.4"></script>
 </body>
 </html>

@@ -3302,14 +3302,12 @@
         <ul class="user-dropdown-menu">
           <li><button id="dash-orders-btn">Order History</button></li>
           <li><button id="dash-bookings-btn">Bookings</button></li>
-          <li><button id="dash-live-tables-btn">Live Tables</button></li>
           <li><button id="logout-btn">Log Out</button></li>
         </ul>
       `;
       
       $('#dash-orders-btn')?.addEventListener('click', () => openUserDashboard('orders'));
       $('#dash-bookings-btn')?.addEventListener('click', () => openUserDashboard('bookings'));
-      $('#dash-live-tables-btn')?.addEventListener('click', () => openLiveTablesView());
       $('#logout-btn')?.addEventListener('click', () => {
         handleLogout().then(() => showToast('Logged out successfully.'));
       });
