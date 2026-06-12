@@ -1,8 +1,8 @@
-(function () {
+﻿(function () {
   'use strict';
 
   /* ============================================
-     RUSSELL HALL CAFÉ — COMPLETE APP.JS
+     RUSSELL HALL CAFÃ‰ â€” COMPLETE APP.JS
      ============================================ */
 
   window.showImagePlaceholder = function(imgEl, emoji, name) {
@@ -54,14 +54,14 @@
   const COUPONS_LOCAL = {
     BRUNCH10: { type: 'percent', value: 10, label: '10% off', discount: 0 },
     WELCOME15: { type: 'percent', value: 15, label: '15% off', discount: 0 },
-    RHC20: { type: 'fixed', value: 2, label: '£2 off', discount: 2 },
-    STUDENT5: { type: 'fixed', value: 5, label: '£5 off', discount: 5, min: 20 }
+    RHC20: { type: 'fixed', value: 2, label: 'Â£2 off', discount: 2 },
+    STUDENT5: { type: 'fixed', value: 5, label: 'Â£5 off', discount: 5, min: 20 }
   };
 
   // --- HELPERS ---
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
-  const formatPrice = n => '£' + n.toFixed(2);
+  const formatPrice = n => 'Â£' + n.toFixed(2);
   const cartKey = (item, options) => item.id + '::' + (options || []).map(o => o.label).sort().join('|');
   const getCartCount = () => cart.reduce((s, l) => s + l.qty, 0);
   const getSubtotal = () => cart.reduce((s, l) => s + l.lineTotal, 0);
@@ -179,13 +179,13 @@
 
   // --- SMART SEARCH FILTER SYSTEM ---
   const quickFilters = [
-    { label: '🌿 Vegetarian', query: 'vegetarian' },
-    { label: '☕ Coffee', query: 'coffee' },
-    { label: '🍔 Burgers', query: 'burger' },
-    { label: '🍳 Breakfast', query: 'breakfast' },
-    { label: '💰 Under £4', type: 'price', max: 4 },
-    { label: '🔥 Popular', type: 'popular' },
-    { label: '⚡ Deals', query: 'deal' },
+    { label: 'ðŸŒ¿ Vegetarian', query: 'vegetarian' },
+    { label: 'â˜• Coffee', query: 'coffee' },
+    { label: 'ðŸ” Burgers', query: 'burger' },
+    { label: 'ðŸ³ Breakfast', query: 'breakfast' },
+    { label: 'ðŸ’° Under Â£4', type: 'price', max: 4 },
+    { label: 'ðŸ”¥ Popular', type: 'popular' },
+    { label: 'âš¡ Deals', query: 'deal' },
   ];
 
   function getAllMenuItems() {
@@ -211,8 +211,8 @@
     const isPopularFilter = q === 'popular';
     
     let maxPrice = null;
-    if (q.startsWith('under £')) {
-      maxPrice = parseFloat(q.replace('under £', ''));
+    if (q.startsWith('under Â£')) {
+      maxPrice = parseFloat(q.replace('under Â£', ''));
     } else if (q.startsWith('under ')) {
       maxPrice = parseFloat(q.replace('under ', ''));
     } else if (q.startsWith('price:')) {
@@ -232,7 +232,7 @@
       const allergenMatch = item.allergens?.some(a => a.toLowerCase().includes(q));
       const priceMatch = item.price?.toString().includes(q);
       
-      // Fuzzy match for typos — checks if 60% of characters match
+      // Fuzzy match for typos â€” checks if 60% of characters match
       const fuzzyMatch = fuzzyScore(item.name?.toLowerCase(), q) > 0.6;
       
       return nameMatch || descMatch || catMatch || 
@@ -291,7 +291,7 @@
       "
       onmouseover="this.style.background='rgba(232,168,37,0.08)'"
       onmouseout="this.style.background='none'">
-        <span style="font-size:1.3rem">${item.emoji || '🍔'}</span>
+        <span style="font-size:1.3rem">${item.emoji || 'ðŸ”'}</span>
         <div style="flex:1;min-width:0;text-align:left;">
           <div style="
             font-family:'Playfair Display',serif;
@@ -304,14 +304,14 @@
             white-space:nowrap;
             overflow:hidden;
             text-overflow:ellipsis;
-          ">${item.category} · ${item.description?.substring(0,40)}...</div>
+          ">${item.category} Â· ${item.description?.substring(0,40)}...</div>
         </div>
         <div style="
           font-family:'Oswald',sans-serif;
           font-weight:600;
           color:#e8a825;
           flex-shrink:0;
-        ">£${item.price?.toFixed(2)}</div>
+        ">Â£${item.price?.toFixed(2)}</div>
       </div>`).join('');
       
     // Add "see all results" footer
@@ -327,7 +327,7 @@
       "
       onmouseover="this.style.background='rgba(232,168,37,0.08)'"
       onmouseout="this.style.background='none'">
-        SEE ALL ${searchMenuItems(query, allItems).length} RESULTS →
+        SEE ALL ${searchMenuItems(query, allItems).length} RESULTS â†’
       </div>`;
   }
 
@@ -375,7 +375,7 @@
         padding: 3rem 1rem;
         width: 100%;
       ">
-        <div style="font-size:3rem;margin-bottom:0.8rem">🔍</div>
+        <div style="font-size:3rem;margin-bottom:0.8rem">ðŸ”</div>
         <h3 style="
           font-family:'Playfair Display',serif;
           color:#e8a825;
@@ -418,7 +418,7 @@
     }
     bar.style.display = 'block';
     bar.innerHTML = resultCount > 0
-      ? `Showing <strong style="color:#e8a825">${resultCount}</strong> of ${totalCount} items for "<strong style="color:#e8a825">${query}</strong>" <span style="cursor:pointer;color:#8a7a68;margin-left:0.5rem" onclick="clearSearch()">✕ Clear</span>`
+      ? `Showing <strong style="color:#e8a825">${resultCount}</strong> of ${totalCount} items for "<strong style="color:#e8a825">${query}</strong>" <span style="cursor:pointer;color:#8a7a68;margin-left:0.5rem" onclick="clearSearch()">âœ• Clear</span>`
       : `No items found for "<strong style="color:#e8a825">${query}</strong>"`;
   }
 
@@ -479,7 +479,7 @@
     container.innerHTML = quickFilters.map(filter => {
       let isActive = false;
       if (filter.type === 'price') {
-        isActive = currentQuery === `under £${filter.max}` || currentQuery === `price:${filter.max}`;
+        isActive = currentQuery === `under Â£${filter.max}` || currentQuery === `price:${filter.max}`;
       } else if (filter.type === 'popular') {
         isActive = currentQuery === 'popular';
       } else {
@@ -516,7 +516,7 @@
       const input = document.getElementById('menu-search-input');
       let searchQuery = '';
       if (type === 'price') {
-        searchQuery = `under £${max}`;
+        searchQuery = `under Â£${max}`;
       } else if (type === 'popular') {
         searchQuery = 'popular';
       } else {
@@ -725,7 +725,7 @@
     if (imgEl) flyToCart(imgEl);
     if (typeof refreshMenuAfterCartChange === 'function') refreshMenuAfterCartChange();
     renderCart();
-    showToast(`✓ ${item.name} added to cart`);
+    showToast(`âœ“ ${item.name} added to cart`);
   }
 
   function setCartQty(key, delta) {
@@ -769,8 +769,8 @@
     // View toggle header markup
     let toggleHtml = `
       <div class="chalkboard-toggle-wrap">
-        <button class="chalk-toggle-btn ${browseViewMode === 'list' ? 'active' : ''}" data-view="list">📋 Interactive Chalk List</button>
-        <button class="chalk-toggle-btn ${browseViewMode === 'chart' ? 'active' : ''}" data-view="chart">🎨 Visual Menu Chart</button>
+        <button class="chalk-toggle-btn ${browseViewMode === 'list' ? 'active' : ''}" data-view="list">ðŸ“‹ Interactive Chalk List</button>
+        <button class="chalk-toggle-btn ${browseViewMode === 'chart' ? 'active' : ''}" data-view="chart">ðŸŽ¨ Visual Menu Chart</button>
       </div>
     `;
 
@@ -779,9 +779,9 @@
         ${toggleHtml}
         <div class="menu-chart-container reveal">
           <div class="menu-chart-frame" id="menu-chart-frame-element">
-            <img src="images/menu-board.png" class="menu-chart-img" alt="Russell Hall Café Menu Chart" id="menu-chart-img">
+            <img src="images/menu-board.png" class="menu-chart-img" alt="Russell Hall CafÃ© Menu Chart" id="menu-chart-img">
             <div class="menu-chart-overlay">
-              <span class="zoom-icon">🔍 Click to zoom & interact</span>
+              <span class="zoom-icon">ðŸ” Click to zoom & interact</span>
             </div>
           </div>
         </div>
@@ -895,7 +895,7 @@
     
     const expectedChipsCount = Object.keys(menuData).length + 1; // including 'All'
     if (slider.children.length === 0 || slider.querySelectorAll('.cat-chip').length !== expectedChipsCount) {
-      const cats = [{ key: 'all', icon: '🍽️', title: 'All' }, ...Object.entries(menuData).map(([key, cat]) => ({
+      const cats = [{ key: 'all', icon: 'ðŸ½ï¸', title: 'All' }, ...Object.entries(menuData).map(([key, cat]) => ({
         key, icon: cat.icon, title: cat.title
       }))];
       slider.innerHTML = cats.map(c =>
@@ -930,17 +930,17 @@
     container.innerHTML = `
       <div class="featured-product">
         <img class="featured-product-img" src="${imgSrc(item.image)}"
-             onerror="this.onerror=null; showImagePlaceholder(this, '${item.emoji || '🍔'}', '${item.name.replace(/'/g, "\\'")}')"
-             alt="Featured ${item.name} dish at Russell Hall Café">
+             onerror="this.onerror=null; showImagePlaceholder(this, '${item.emoji || 'ðŸ”'}', '${item.name.replace(/'/g, "\\'")}')"
+             alt="Featured ${item.name} dish at Russell Hall CafÃ©">
         <div class="featured-product-info">
-          <p class="featured-badge">⭐ Featured</p>
+          <p class="featured-badge">â­ Featured</p>
           <h3>${item.name}</h3>
           <p>${item.description}. Stacked double beef patties, melted American cheese, all the classics in a toasted brioche bun.</p>
           <div class="featured-price">${formatPrice(item.price)}</div>
           <div style="display:flex;gap:0.75rem;align-items:center">
             ${qty > 0 ? `
               <div class="qty-stepper">
-                <button type="button" data-action="dec" data-id="${item.id}">−</button>
+                <button type="button" data-action="dec" data-id="${item.id}">âˆ’</button>
                 <span>${qty}</span>
                 <button type="button" data-action="inc" data-id="${item.id}">+</button>
               </div>
@@ -1002,10 +1002,10 @@
               <article class="order-card${item.outOfStock ? ' out-of-stock-card' : ''}${isHighlighted ? ' highlight-large' : ''}" data-id="${item.id}" style="${item.outOfStock ? 'opacity:0.6;' : ''}">
                 <div class="order-card-img-wrap">
                   <img class="order-card-img" src="${imgSrc(item.image)}"
-                       onerror="this.onerror=null; showImagePlaceholder(this, '${item.emoji || '🍔'}', '${item.name.replace(/'/g, "\\'")}')"
-                       alt="${item.name} food item at Russell Hall Café"
+                       onerror="this.onerror=null; showImagePlaceholder(this, '${item.emoji || 'ðŸ”'}', '${item.name.replace(/'/g, "\\'")}')"
+                       alt="${item.name} food item at Russell Hall CafÃ©"
                        loading="lazy">
-                  <button class="order-card-fav" aria-label="Favourite">♡</button>
+                  <button class="order-card-fav" aria-label="Favourite">â™¡</button>
                   ${(key === 'hotdrinks' || item.id.startsWith('hd')) ? `
                     <div class="steam-container">
                       <span class="steam-line"></span>
@@ -1031,7 +1031,7 @@
                       <button type="button" class="btn-add" disabled style="background:#333; color:#777; border-color:#333; cursor:not-allowed;">Sold Out</button>
                     ` : qty > 0 ? `
                       <div class="qty-stepper">
-                        <button type="button" data-action="dec" data-id="${item.id}" aria-label="Decrease">−</button>
+                        <button type="button" data-action="dec" data-id="${item.id}" aria-label="Decrease">âˆ’</button>
                         <span>${qty}</span>
                         <button type="button" data-action="inc" data-id="${item.id}" aria-label="Increase">+</button>
                       </div>
@@ -1086,7 +1086,7 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         btn.classList.toggle('active');
-        btn.textContent = btn.classList.contains('active') ? '♥' : '♡';
+        btn.textContent = btn.classList.contains('active') ? 'â™¥' : 'â™¡';
       });
     });
   }
@@ -1167,7 +1167,7 @@
     if (!list) return;
 
     if (!cart.length) {
-      list.innerHTML = '<p class="cart-empty">Your cart is empty. Start adding items! 🍳</p>';
+      list.innerHTML = '<p class="cart-empty">Your cart is empty. Start adding items! ðŸ³</p>';
       if (footer) footer.classList.add('hidden');
       return;
     }
@@ -1175,13 +1175,13 @@
 
     list.innerHTML = cart.map(line => `
       <div class="cart-line">
-        <img src="${line.image}" alt="${line.name} in Russell Hall Café cart">
+        <img src="${line.image}" alt="${line.name} in Russell Hall CafÃ© cart">
         <div class="cart-line-info">
           <h4>${line.name}</h4>
           ${line.options.length ? `<div class="customs">${line.options.map(o => o.label).join(', ')}</div>` : ''}
           <div class="cart-line-actions">
             <div class="qty-stepper">
-              <button type="button" data-cart-dec="${line.key}">−</button>
+              <button type="button" data-cart-dec="${line.key}">âˆ’</button>
               <span>${line.qty}</span>
               <button type="button" data-cart-inc="${line.key}">+</button>
             </div>
@@ -1269,7 +1269,7 @@
       dot.classList.remove('active', 'done');
       dot.textContent = s;
       if (s === step) dot.classList.add('active');
-      else if (s < step) { dot.classList.add('done'); dot.textContent = '✓'; }
+      else if (s < step) { dot.classList.add('done'); dot.textContent = 'âœ“'; }
     });
     $$('.step-label').forEach((label, i) => {
       label.classList.toggle('active', i + 1 === step);
@@ -1332,7 +1332,7 @@
   function renderCheckout() {
     const list = $('#checkout-items');
     list.innerHTML = cart.map(l => `
-      <div class="checkout-item"><span>${l.qty}× ${l.name}</span><span>${formatPrice(l.lineTotal)}</span></div>
+      <div class="checkout-item"><span>${l.qty}Ã— ${l.name}</span><span>${formatPrice(l.lineTotal)}</span></div>
     `).join('');
     updateCheckoutTotals();
   }
@@ -1368,7 +1368,7 @@
     if (paymentRequest) {
       paymentRequest.update({
         total: {
-          label: 'Russell Hall Café Order',
+          label: 'Russell Hall CafÃ© Order',
           amount: Math.round(total * 100) || 1000
         }
       });
@@ -1387,7 +1387,7 @@
       if (cashTitle) cashTitle.textContent = 'Pay on Collection';
       if (cashDesc) cashDesc.textContent = 'Pay via Cash/Card in cafe on pickup.';
       if (cashSection) {
-        cashSection.innerHTML = `<p style="font-size:0.92rem;opacity:0.85;padding:0.75rem 0;color:var(--cream);line-height:1.5;margin:0;">💳 <strong>Pay on Collection:</strong> Your total of <strong>${formatPrice(getTotal())}</strong> is payable at the café counter when you collect your order. We accept cash, credit/debit cards, Apple Pay, Google Pay, and Contactless on arrival.</p>`;
+        cashSection.innerHTML = `<p style="font-size:0.92rem;opacity:0.85;padding:0.75rem 0;color:var(--cream);line-height:1.5;margin:0;">ðŸ’³ <strong>Pay on Collection:</strong> Your total of <strong>${formatPrice(getTotal())}</strong> is payable at the cafÃ© counter when you collect your order. We accept cash, credit/debit cards, Apple Pay, Google Pay, and Contactless on arrival.</p>`;
       }
       if (currentPaymentMethod === 'cash' && payBtn) {
         payBtn.innerHTML = `Confirm Order <span id="pay-amount">${formatPrice(getTotal())}</span>`;
@@ -1396,7 +1396,7 @@
       if (cashTitle) cashTitle.textContent = 'Pay Cash';
       if (cashDesc) cashDesc.textContent = 'Pay with cash when your food is ready or delivered.';
       if (cashSection) {
-        cashSection.innerHTML = `<p style="font-size:0.92rem;opacity:0.85;padding:0.75rem 0;color:var(--cream);line-height:1.5;margin:0;">💵 <strong>Pay Cash:</strong> Please prepare exact cash of <strong>${formatPrice(getTotal())}</strong> for when your order is delivered or ready.</p>`;
+        cashSection.innerHTML = `<p style="font-size:0.92rem;opacity:0.85;padding:0.75rem 0;color:var(--cream);line-height:1.5;margin:0;">ðŸ’µ <strong>Pay Cash:</strong> Please prepare exact cash of <strong>${formatPrice(getTotal())}</strong> for when your order is delivered or ready.</p>`;
       }
       if (currentPaymentMethod === 'cash' && payBtn) {
         payBtn.innerHTML = `Confirm Order <span id="pay-amount">${formatPrice(getTotal())}</span>`;
@@ -1420,7 +1420,7 @@
       const data = await res.json();
       if (!data.valid) throw new Error(data.error || 'Invalid coupon');
       appliedCoupon = data;
-      msg.textContent = `✓ ${data.label} applied`;
+      msg.textContent = `âœ“ ${data.label} applied`;
       msg.className = 'coupon-applied';
       updateCheckoutTotals();
       return;
@@ -1436,7 +1436,7 @@
       return;
     }
     if (coupon.min && getSubtotal() < coupon.min) {
-      msg.textContent = `Minimum order £${coupon.min} for this coupon`;
+      msg.textContent = `Minimum order Â£${coupon.min} for this coupon`;
       msg.className = 'error-msg';
       return;
     }
@@ -1444,7 +1444,7 @@
       ? Math.round(getSubtotal() * (coupon.value / 100) * 100) / 100
       : Math.min(coupon.value, getSubtotal());
     appliedCoupon = { valid: true, code, discount, label: coupon.label };
-    msg.textContent = `✓ ${coupon.label} applied`;
+    msg.textContent = `âœ“ ${coupon.label} applied`;
     msg.className = 'coupon-applied';
     updateCheckoutTotals();
   }
@@ -1484,7 +1484,7 @@
       country: 'GB',
       currency: 'gbp',
       total: {
-        label: 'Russell Hall Café Order',
+        label: 'Russell Hall CafÃ© Order',
         amount: Math.round(getTotal() * 100) || 1000
       },
       requestPayerName: true,
@@ -1537,7 +1537,7 @@
             payment_method_id: ev.paymentMethod.id,
             amount: orderData.totalPence,
             currency: 'gbp',
-            description: `Russell Hall Café — Wallet Order for ${orderData.name}`,
+            description: `Russell Hall CafÃ© â€” Wallet Order for ${orderData.name}`,
             order: orderData,
             couponCode: orderData.couponCode
           })
@@ -1552,7 +1552,7 @@
         }
         
         ev.complete('success');
-        if (statusEl) statusEl.textContent = 'Payment approved ✓';
+        if (statusEl) statusEl.textContent = 'Payment approved âœ“';
         await sleep(800);
         
         // Save to firestore first, then show confirmation screen
@@ -1587,7 +1587,7 @@
           status: 'received',
           paymentMethod: 'wallet',
           paymentStatus: 'paid',
-          estimatedTime: orderData.orderType === 'delivery' ? `${orderData.prepTime + 15}–${orderData.prepTime + 25} mins` : `${orderData.prepTime} mins`,
+          estimatedTime: orderData.orderType === 'delivery' ? `${orderData.prepTime + 15}â€“${orderData.prepTime + 25} mins` : `${orderData.prepTime} mins`,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
@@ -1657,7 +1657,7 @@
   function updateWalletPaymentRequest() {
     if (!paymentRequest) return;
     paymentRequest.update({
-      total: { label: 'Russell Hall Café', amount: Math.round(getTotal() * 100) }
+      total: { label: 'Russell Hall CafÃ©', amount: Math.round(getTotal() * 100) }
     });
   }
 
@@ -1747,11 +1747,11 @@
     if (paymentMethod === 'cash') {
       const isDelivery = orderDoc.orderType === 'delivery';
       $('#confirm-time').innerHTML = isDelivery
-        ? `Order placed — please pay the driver with cash when your food is delivered. Your order number is <strong>#${orderDoc.orderId}</strong>.`
-        : `Order placed — please pay at the counter when your food is ready. Your order number is <strong>#${orderDoc.orderId}</strong>.`;
+        ? `Order placed â€” please pay the driver with cash when your food is delivered. Your order number is <strong>#${orderDoc.orderId}</strong>.`
+        : `Order placed â€” please pay at the counter when your food is ready. Your order number is <strong>#${orderDoc.orderId}</strong>.`;
     } else {
       $('#confirm-time').innerHTML = orderDoc.orderType === 'delivery'
-        ? `Estimated delivery: ${prepVal + 15}–${prepVal + 25} minutes. Your order number is <strong>#${orderDoc.orderId}</strong>.`
+        ? `Estimated delivery: ${prepVal + 15}â€“${prepVal + 25} minutes. Your order number is <strong>#${orderDoc.orderId}</strong>.`
         : `Estimated ready: ${prepVal} minutes. Your order number is <strong>#${orderDoc.orderId}</strong>.`;
     }
 
@@ -1761,9 +1761,9 @@
       orderTypeDetailsHtml = `
         <div class="vat-breakdown" style="border-top:1px dashed rgba(201,148,58,0.25); margin-top:0.65rem; padding-top:0.5rem; font-size:0.78rem; color:var(--cream); line-height:1.5;">
           <div style="font-weight:600; color:var(--gold); margin-bottom:0.15rem;">Collection Details</div>
-          <div>📍 <strong>Collection Point:</strong> Café Counter</div>
-          <div>🏠 <strong>Address:</strong> 173-175 Stourbridge Road, Dudley, DY1 2EQ</div>
-          <div style="opacity:0.85; margin-top:0.15rem;">💡 <em>Show order number <strong>#${orderDoc.orderId}</strong> at the counter on arrival.</em></div>
+          <div>ðŸ“ <strong>Collection Point:</strong> CafÃ© Counter</div>
+          <div>ðŸ  <strong>Address:</strong> 173-175 Stourbridge Road, Dudley, DY1 2EQ</div>
+          <div style="opacity:0.85; margin-top:0.15rem;">ðŸ’¡ <em>Show order number <strong>#${orderDoc.orderId}</strong> at the counter on arrival.</em></div>
         </div>
       `;
     } else if (orderDoc.orderType === 'delivery') {
@@ -1771,15 +1771,15 @@
       orderTypeDetailsHtml = `
         <div class="vat-breakdown" style="border-top:1px dashed rgba(201,148,58,0.25); margin-top:0.65rem; padding-top:0.5rem; font-size:0.78rem; color:var(--cream); line-height:1.5;">
           <div style="font-weight:600; color:var(--gold); margin-bottom:0.15rem;">Delivery Details</div>
-          <div>📍 <strong>Address:</strong> ${addr || 'Provided Address'}</div>
-          <div style="opacity:0.85; margin-top:0.15rem;">💡 <em>The driver will contact you at <strong>${orderDoc.customerDetails?.phone}</strong> if needed.</em></div>
+          <div>ðŸ“ <strong>Address:</strong> ${addr || 'Provided Address'}</div>
+          <div style="opacity:0.85; margin-top:0.15rem;">ðŸ’¡ <em>The driver will contact you at <strong>${orderDoc.customerDetails?.phone}</strong> if needed.</em></div>
         </div>
       `;
     } else {
       orderTypeDetailsHtml = `
         <div class="vat-breakdown" style="border-top:1px dashed rgba(201,148,58,0.25); margin-top:0.65rem; padding-top:0.5rem; font-size:0.78rem; color:var(--cream); line-height:1.5;">
           <div style="font-weight:600; color:var(--gold); margin-bottom:0.15rem;">Dine-In Details</div>
-          <div>📍 <strong>Table:</strong> Table ${orderDoc.tableNumber || 'N/A'}</div>
+          <div>ðŸ“ <strong>Table:</strong> Table ${orderDoc.tableNumber || 'N/A'}</div>
         </div>
       `;
     }
@@ -1787,7 +1787,7 @@
     $('#confirm-summary').innerHTML = 
       `<div style="font-size:0.85rem;color:var(--cream);margin-bottom:0.75rem;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:0.4rem;"><strong>Customer:</strong> ${orderDoc.customerDetails?.name || 'Guest'}</div>` +
       savedItems.map(l =>
-        `<div class="checkout-item"><span>${l.qty}× ${l.name}</span><span>${formatPrice(l.lineTotal || (l.price * l.qty))}</span></div>`
+        `<div class="checkout-item"><span>${l.qty}Ã— ${l.name}</span><span>${formatPrice(l.lineTotal || (l.price * l.qty))}</span></div>`
       ).join('') + 
       (orderDoc.tip > 0 ? `<div class="checkout-item"><span>Tip</span><span>${formatPrice(orderDoc.tip)}</span></div>` : '') +
       `<div class="checkout-item" style="font-size:0.72rem;opacity:0.6;margin-top:0.25rem;color:var(--cream);"><span>Includes 20% UK VAT</span><span>${formatPrice(orderDoc.vat)}</span></div>` +
@@ -1800,7 +1800,7 @@
     
     let typeDetailText = '';
     if (orderDoc.orderType === 'collection') {
-      typeDetailText = `Type: Collection\nCollection Point: Russell Hall Café counter\nAddress: 173-175 Stourbridge Road, Dudley, DY1 2EQ\n`;
+      typeDetailText = `Type: Collection\nCollection Point: Russell Hall CafÃ© counter\nAddress: 173-175 Stourbridge Road, Dudley, DY1 2EQ\n`;
     } else if (orderDoc.orderType === 'delivery') {
       const addr = orderDoc.deliveryDetails ? `${orderDoc.deliveryDetails.address}, ${orderDoc.deliveryDetails.city}, ${orderDoc.deliveryDetails.zip}` : '';
       typeDetailText = `Type: Delivery\nAddress: ${addr}\n`;
@@ -1808,7 +1808,7 @@
       typeDetailText = `Type: Dine-In\nTable: ${orderDoc.tableNumber || 'N/A'}\n`;
     }
 
-    const receiptText = `*Russell Hall Café Order Receipt*\n` +
+    const receiptText = `*Russell Hall CafÃ© Order Receipt*\n` +
       `Order: #${orderDoc.orderId}\n` +
       `Customer: ${orderDoc.customerDetails?.name || 'Guest'}\n` +
       typeDetailText +
@@ -1875,7 +1875,7 @@
       status: 'received',
       paymentMethod: 'cash',
       paymentStatus: 'cash-pending',
-      estimatedTime: orderData.orderType === 'delivery' ? `${prepVal + 15}–${prepVal + 25} mins` : `${prepVal} mins`,
+      estimatedTime: orderData.orderType === 'delivery' ? `${prepVal + 15}â€“${prepVal + 25} mins` : `${prepVal} mins`,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -1890,7 +1890,7 @@
     try {
       console.log('[Firebase] Saving cash order:', orderId, 'userId:', currentUser.uid);
       await db.collection('orders').doc(orderId).set(orderDoc);
-      console.log('[Firebase] ✓ Cash order saved to Firestore successfully! Doc ID:', orderId);
+      console.log('[Firebase] âœ“ Cash order saved to Firestore successfully! Doc ID:', orderId);
       
       closeCheckout();
       cart = [];
@@ -1902,7 +1902,7 @@
       renderOrderGrid();
       
       renderConfirmationScreen(orderDoc, savedItems, savedTotal, prepVal, 'cash');
-      showToast('Order saved to your account ✓');
+      showToast('Order saved to your account âœ“');
       
       // Decrement daily specials if order contains today's special
       try {
@@ -1923,7 +1923,7 @@
       currentTrackingStage = 0;
       
     } catch (err) {
-      console.error('[Firebase] ❌ Error saving cash order:', err);
+      console.error('[Firebase] âŒ Error saving cash order:', err);
       // Go back to checkout and show error
       goToStep(3);
       const errEl = document.getElementById('checkout-error') || document.getElementById('stripe-error');
@@ -2092,7 +2092,7 @@
         
         const durationMatch = estTime.match(/\d+/);
         let durationMin = durationMatch ? parseInt(durationMatch[0]) : 0;
-        const rangeMatch = estTime.match(/–\s*(\d+)/);
+        const rangeMatch = estTime.match(/â€“\s*(\d+)/);
         if (rangeMatch) {
           durationMin = parseInt(rangeMatch[1]);
         }
@@ -2583,7 +2583,7 @@
   function initNewsletter() {
     $('#newsletter-form')?.addEventListener('submit', e => {
       e.preventDefault();
-      showToast('Thanks for subscribing! 🎉');
+      showToast('Thanks for subscribing! ðŸŽ‰');
       e.target.reset();
     });
   }
@@ -2613,18 +2613,18 @@
 
   // --- DYNAMIC FIRESTORE MENU LOADER & SEEDER ---
   const categoryEmojis = {
-    deals: '🏷️',
-    breakfast: '🍳',
-    muffins: '🥐',
-    toasties: '🥪',
-    sandwiches: '🥙',
-    cheesy: '🧀',
-    burgers: '🍔',
-    sides: '🥗',
-    cocktails: '🍸',
-    beers: '🍺',
-    hotdrinks: '☕',
-    softdrinks: '🥤'
+    deals: 'ðŸ·ï¸',
+    breakfast: 'ðŸ³',
+    muffins: 'ðŸ¥',
+    toasties: 'ðŸ¥ª',
+    sandwiches: 'ðŸ¥™',
+    cheesy: 'ðŸ§€',
+    burgers: 'ðŸ”',
+    sides: 'ðŸ¥—',
+    cocktails: 'ðŸ¸',
+    beers: 'ðŸº',
+    hotdrinks: 'â˜•',
+    softdrinks: 'ðŸ¥¤'
   };
 
   function setMenuItems(items) {
@@ -2678,7 +2678,7 @@
               veg: !!item.veg,
               outOfStock: false,
               status: 'Active',
-              emoji: categoryEmojis[catKey] || '🍔',
+              emoji: categoryEmojis[catKey] || 'ðŸ”',
               sizes: item.sizes || [],
               options: item.options || []
             });
@@ -2686,7 +2686,7 @@
         }
         
         return batch.commit().then(() => {
-          console.log("[Firebase] ✓ Menu collections seeded successfully.");
+          console.log("[Firebase] âœ“ Menu collections seeded successfully.");
           setupMenuListeners();
         });
       } else {
@@ -2717,7 +2717,7 @@
               docNeedsUpdate = true;
             }
             if (!data.emoji) {
-              updates.emoji = categoryEmojis[catKey] || '🍔';
+              updates.emoji = categoryEmojis[catKey] || 'ðŸ”';
               docNeedsUpdate = true;
             }
             if (localItem && localItem.originalPrice && data.originalPrice !== localItem.originalPrice) {
@@ -2733,22 +2733,22 @@
           
           if (needsMigration) {
             batch.commit().then(() => {
-              console.log("[Firebase] ✓ Menu items status/emoji/originalPrice attributes migrated.");
+              console.log("[Firebase] âœ“ Menu items status/emoji/originalPrice attributes migrated.");
               setupMenuListeners();
             }).catch(err => {
-              console.error("[Firebase] ✗ Migration failed:", err);
+              console.error("[Firebase] âœ— Migration failed:", err);
               setupMenuListeners();
             });
           } else {
             setupMenuListeners();
           }
         }).catch(err => {
-          console.error("[Firebase] ✗ Error reading menuItems for migration:", err);
+          console.error("[Firebase] âœ— Error reading menuItems for migration:", err);
           setupMenuListeners();
         });
       }
     }).catch(err => {
-      console.error("[Firebase] ✗ Error checking/seeding menu collections:", err);
+      console.error("[Firebase] âœ— Error checking/seeding menu collections:", err);
       fallbackToLocalMenu();
     });
   }
@@ -2793,7 +2793,7 @@
           if (cat === 'beers' || cat === 'cocktails') return false;
           if (item.id === 'd5' || item.id === 'd7') return false;
           if (item.id === 'd3') {
-            item.description = "Any Gourmet Burger + Side of Fries + Soft Drink (Save up to £2.00)";
+            item.description = "Any Gourmet Burger + Side of Fries + Soft Drink (Save up to Â£2.00)";
           }
           return true;
         });
@@ -3052,7 +3052,7 @@
           });
         } else {
           if (ordersList) {
-            ordersList.innerHTML = `<p class="empty-msg" style="color:#e74c3c;">⚠️ ${error.message || 'Failed to load orders.'}</p>`;
+            ordersList.innerHTML = `<p class="empty-msg" style="color:#e74c3c;">âš ï¸ ${error.message || 'Failed to load orders.'}</p>`;
           }
         }
       });
@@ -3109,8 +3109,8 @@
                   </div>
                   <div class="history-body">
                     <p style="opacity:0.85;margin-bottom:0.25rem;color:var(--cream);"><strong>Customer:</strong> ${o.customerDetails?.name || o.name || 'Guest'}</p>
-                    <p style="opacity:0.75;margin-bottom:0.5rem;color:var(--cream);">Date: ${dateStr} · Type: ${o.orderType} ${o.tableNumber ? `(Table ${o.tableNumber})` : ''} · Prep: ${o.prepTime ? `${o.prepTime} mins` : '15 mins'}</p>
-                    ${(o.items || []).map(i => `<p style="margin-left:0.25rem;font-size:0.82rem;color:var(--cream);opacity:0.9;">• ${i.qty}× ${i.name} ${(i.options || []).length ? `(${(i.options || []).map(op=>op.label).join(', ')})` : ''}</p>`).join('')}
+                    <p style="opacity:0.75;margin-bottom:0.5rem;color:var(--cream);">Date: ${dateStr} Â· Type: ${o.orderType} ${o.tableNumber ? `(Table ${o.tableNumber})` : ''} Â· Prep: ${o.prepTime ? `${o.prepTime} mins` : '15 mins'}</p>
+                    ${(o.items || []).map(i => `<p style="margin-left:0.25rem;font-size:0.82rem;color:var(--cream);opacity:0.9;">â€¢ ${i.qty}Ã— ${i.name} ${(i.options || []).length ? `(${(i.options || []).map(op=>op.label).join(', ')})` : ''}</p>`).join('')}
                     
                     <!-- UK VAT Receipt Compliance Breakdown -->
                     <div class="vat-breakdown" style="border-top:1px dashed rgba(201,148,58,0.25); margin-top:0.65rem; padding-top:0.5rem; font-size:0.72rem; color:var(--cream); opacity:0.85; line-height:1.45;">
@@ -3120,7 +3120,7 @@
                       </div>
                       <div style="display:flex; justify-content:space-between; opacity:0.85;">
                         <span>Standard Rated (20%):</span>
-                        <span>Net: ${formatPrice(netStandard)} · VAT: ${formatPrice(vatVal)} · Gross: ${formatPrice(grossStandard)}</span>
+                        <span>Net: ${formatPrice(netStandard)} Â· VAT: ${formatPrice(vatVal)} Â· Gross: ${formatPrice(grossStandard)}</span>
                       </div>
                       <div style="display:flex; justify-content:space-between; opacity:0.85; margin-top:0.1rem;">
                         <span>Zero Rated (0%):</span>
@@ -3136,13 +3136,13 @@
                     <div class="inline-tip-box" id="tip-box-${o.orderId}" style="display:none; margin-top:0.75rem; border-top:1px dashed rgba(201,148,58,0.2); padding-top:0.75rem; background:rgba(26,18,9,0.5); border:1px solid rgba(201,148,58,0.15); border-radius:6px; padding:0.65rem;">
                       <p style="font-size:0.78rem; font-weight:600; margin-bottom:0.4rem; color:var(--gold);">Add a Tip for the Staff:</p>
                       <div style="display:flex; gap:0.35rem; margin-bottom:0.4rem;">
-                        <button class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.72rem; flex:1; min-height:unset;" onclick="window.setHistoryTip('${o.orderId}', 1.00)">£1.00</button>
-                        <button class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.72rem; flex:1; min-height:unset;" onclick="window.setHistoryTip('${o.orderId}', 2.00)">£2.00</button>
-                        <button class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.72rem; flex:1; min-height:unset;" onclick="window.setHistoryTip('${o.orderId}', 5.00)">£5.00</button>
+                        <button class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.72rem; flex:1; min-height:unset;" onclick="window.setHistoryTip('${o.orderId}', 1.00)">Â£1.00</button>
+                        <button class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.72rem; flex:1; min-height:unset;" onclick="window.setHistoryTip('${o.orderId}', 2.00)">Â£2.00</button>
+                        <button class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.72rem; flex:1; min-height:unset;" onclick="window.setHistoryTip('${o.orderId}', 5.00)">Â£5.00</button>
                         <button class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.72rem; flex:1; min-height:unset;" onclick="window.toggleCustomHistoryTip('${o.orderId}')">Custom</button>
                       </div>
                       <div id="custom-history-tip-div-${o.orderId}" style="display:none; margin-bottom:0.4rem;">
-                        <input type="number" id="custom-history-tip-val-${o.orderId}" placeholder="Enter tip (£)" min="0.01" step="0.01" style="width:100%; background:var(--bg-primary); border:1px solid var(--border-gold); color:var(--cream); padding:0.35rem; border-radius:4px; font-size:0.78rem;">
+                        <input type="number" id="custom-history-tip-val-${o.orderId}" placeholder="Enter tip (Â£)" min="0.01" step="0.01" style="width:100%; background:var(--bg-primary); border:1px solid var(--border-gold); color:var(--cream); padding:0.35rem; border-radius:4px; font-size:0.78rem;">
                       </div>
                       <div style="display:flex; justify-content:flex-end; gap:0.35rem; margin-top:0.5rem;">
                         <button class="btn btn-outline" style="padding:0.3rem 0.6rem; font-size:0.72rem; margin:0; min-height:unset;" onclick="window.closeHistoryTip('${o.orderId}')">Cancel</button>
@@ -3156,11 +3156,11 @@
                     </div>
                     
                     ${(o.status === 'complete' || o.status === 'delivered') && !o.tip ? `
-                      <button class="btn btn-outline btn-tip-history" style="margin-top: 0.50rem; padding: 0.4rem 1rem; font-size: 0.78rem; width:100%; display:block;" onclick="window.openHistoryTip('${o.orderId}')">❤ Tip the Chef</button>
+                      <button class="btn btn-outline btn-tip-history" style="margin-top: 0.50rem; padding: 0.4rem 1rem; font-size: 0.78rem; width:100%; display:block;" onclick="window.openHistoryTip('${o.orderId}')">â¤ Tip the Chef</button>
                     ` : ''}
                     
                     ${o.status !== 'complete' && o.status !== 'cancelled' && o.status !== 'delivered' ? `
-                      <button class="btn btn-gold btn-track-history" style="margin-top: 0.50rem; padding: 0.4rem 1rem; font-size: 0.78rem; width:100%; display:block;" onclick="window.trackUserOrder('${o.orderId}')">⚡ Live Track Order</button>
+                      <button class="btn btn-gold btn-track-history" style="margin-top: 0.50rem; padding: 0.4rem 1rem; font-size: 0.78rem; width:100%; display:block;" onclick="window.trackUserOrder('${o.orderId}')">âš¡ Live Track Order</button>
                     ` : ''}
                   </div>
                 </div>
@@ -3291,283 +3291,276 @@
       universalLogin(email, password, 'customer');
     });
 
-    // Verification State Variables
+    // â”€â”€ REGISTRATION VERIFICATION STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     let pendingRegData = null;
     let emailCheckInterval = null;
+    let phoneConfirmationResult = null;
+    let recaptchaVerifier = null;
 
-    $('#register-form')?.addEventListener('submit', e => {
+    // â”€â”€ REGISTER FORM SUBMIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    $('#register-form')?.addEventListener('submit', async e => {
       e.preventDefault();
-      const name = $('#register-name').value.trim();
-      const email = $('#register-email').value.trim();
-      const phone = $('#register-phone').value.trim();
+      const name     = $('#register-name').value.trim();
+      const email    = $('#register-email').value.trim();
+      const phone    = $('#register-phone').value.trim();
       const password = $('#register-password').value;
-      const errorEl = $('#register-error');
-      
-      if (errorEl) {
-        errorEl.textContent = '';
-        errorEl.style.color = 'var(--error-red)';
-      }
+      const errorEl  = $('#register-error');
+
+      if (errorEl) { errorEl.textContent = ''; errorEl.style.color = 'var(--error-red)'; errorEl.style.display = ''; }
 
       if (!name || !email || !phone || !password) {
-        if (errorEl) errorEl.textContent = 'Please fill in all fields.';
+        if (errorEl) { errorEl.textContent = 'Please fill in all fields.'; errorEl.style.display = 'block'; }
         return;
       }
       if (!validateEmail(email)) {
-        if (errorEl) errorEl.textContent = 'Please enter a valid email address.';
+        if (errorEl) { errorEl.textContent = 'Please enter a valid email address.'; errorEl.style.display = 'block'; }
         return;
       }
       const phoneResult = validatePhone(phone);
       if (!phoneResult.isValid) {
-        if (errorEl) errorEl.textContent = 'Please enter a valid phone number with country code (e.g. +447123456789 or UK 07123456789).';
+        if (errorEl) { errorEl.textContent = 'Please enter a valid phone number with country code (e.g. +447123456789).'; errorEl.style.display = 'block'; }
+        return;
+      }
+      if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        if (errorEl) { errorEl.textContent = 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character (e.g. !@#$).'; errorEl.style.display = 'block'; }
         return;
       }
 
-      // Strong password validation
-      const hasUppercase = /[A-Z]/.test(password);
-      const hasLowercase = /[a-z]/.test(password);
-      const hasNumber = /[0-9]/.test(password);
-      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-      
-      if (password.length < 8 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
-        if (errorEl) {
-          errorEl.innerHTML = `Password must be at least 8 characters long and include:
-            <ul style="margin:0.25rem 0 0 1rem; padding:0; text-align:left; font-size:0.8rem; color: var(--error-red);">
-              <li>At least one uppercase letter (A-Z)</li>
-              <li>At least one lowercase letter (a-z)</li>
-              <li>At least one number (0-9)</li>
-              <li>At least one special character (e.g. !@#$)</li>
-            </ul>`;
-          errorEl.style.display = 'block';
-        }
-        return;
-      }
-
-      // Format and store values
       $('#register-phone').value = phoneResult.formatted;
-      const verifyMethod = document.querySelector('input[name="reg-verify-method"]:checked').value;
+      const verifyMethod = document.querySelector('input[name="reg-verify-method"]:checked')?.value || 'email';
+      pendingRegData = { name, email, phone: phoneResult.formatted, password, verifyMethod };
 
-      pendingRegData = {
-        name,
-        email,
-        phone: phoneResult.formatted,
-        password,
-        verifyMethod
-      };
+      const submitBtn = $('#register-form').querySelector('button[type="submit"]');
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Please wait...'; }
 
-      // Proceed to Verification Step
-      showRegisterVerificationStep();
+      try {
+        if (verifyMethod === 'email') {
+          await startEmailVerification();
+        } else {
+          await startPhoneVerification();
+        }
+      } catch (err) {
+        if (errorEl) { errorEl.textContent = err.message || String(err); errorEl.style.display = 'block'; }
+        pendingRegData = null;
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Register'; }
+      }
     });
 
-    function showRegisterVerificationStep() {
-      if (!pendingRegData) return;
-      $('#register-form').classList.add('hidden');
-      $('#register-verify-step').classList.remove('hidden');
-      $('#verify-error').style.display = 'none';
-
-      const titleEl = $('#verify-step-title');
-      const msgEl = $('#verify-step-msg');
-      const otpContainer = $('#verify-otp-container');
-      const emailContainer = $('#verify-email-container');
-
-      otpContainer.classList.add('hidden');
-      emailContainer.classList.add('hidden');
-
-      if (pendingRegData.verifyMethod === 'email') {
-        titleEl.textContent = "Verify Your Email";
-        msgEl.innerHTML = `We are registering your account. A verification link will be sent to <strong>${pendingRegData.email}</strong>. Please check your inbox and verify before clicking complete.`;
-        emailContainer.classList.remove('hidden');
-        
-        // Create user in firebase in background to send verification email
-        auth.createUserWithEmailAndPassword(pendingRegData.email, pendingRegData.password)
-          .then(cred => {
-            // Store user doc but keep unverified or sign out
-            return cred.user.sendEmailVerification();
-          })
-          .then(() => {
-            console.log("Verification email sent successfully.");
-            // Auto check email verification status in background
-            startEmailVerificationWatcher();
-          })
-          .catch(err => {
-            $('#verify-error').textContent = err.message;
-            $('#verify-error').style.display = 'block';
-          });
-      } else {
-        // SMS Verification
-        titleEl.textContent = "Verify Your Phone Number";
-        msgEl.innerHTML = `Enter the 6-digit OTP verification code sent to your mobile <strong>${pendingRegData.phone}</strong>.`;
-        otpContainer.classList.remove('hidden');
-        $('#verify-otp-input').value = '';
-        
-        // Show simulated OTP code in toast for developer/user convenience
-        const simulatedOTP = Math.floor(100000 + Math.random() * 900000);
-        pendingRegData.simulatedOTP = simulatedOTP.toString();
-        setTimeout(() => {
-          showToast(`[SMS Sim] Verification code: ${simulatedOTP}`);
-        }, 1200);
-      }
-    }
-
-    function startEmailVerificationWatcher() {
-      if (emailCheckInterval) clearInterval(emailCheckInterval);
-      emailCheckInterval = setInterval(async () => {
-        const user = auth.currentUser;
-        if (user) {
-          await user.reload();
-          if (user.emailVerified) {
-            clearInterval(emailCheckInterval);
-            completeRegistration();
-          }
+    // â”€â”€ EMAIL VERIFICATION FLOW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    async function startEmailVerification() {
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(pendingRegData.email, pendingRegData.password);
+        await cred.user.sendEmailVerification({ url: window.location.href });
+        await auth.signOut();
+        showRegVerifyStep('email');
+      } catch (err) {
+        if (err.code === 'auth/email-already-in-use') {
+          throw new Error('This email is already registered. Please log in instead.');
         }
-      }, 3000);
+        throw err;
+      }
     }
 
     async function checkEmailVerificationManually() {
-      const user = auth.currentUser;
       const errorEl = $('#verify-error');
       if (errorEl) errorEl.style.display = 'none';
-
-      if (user) {
-        await user.reload();
-        if (user.emailVerified) {
-          if (emailCheckInterval) clearInterval(emailCheckInterval);
-          completeRegistration();
+      if (!pendingRegData) return;
+      try {
+        const cred = await auth.signInWithEmailAndPassword(pendingRegData.email, pendingRegData.password);
+        await cred.user.reload();
+        if (cred.user.emailVerified) {
+          if (emailCheckInterval) { clearInterval(emailCheckInterval); emailCheckInterval = null; }
+          await completeRegistration(false);
         } else {
-          if (errorEl) {
-            errorEl.textContent = "Email is not verified yet. Please click the link inside the verification email first.";
-            errorEl.style.display = 'block';
-          }
+          await auth.signOut();
+          if (errorEl) { errorEl.textContent = 'Email not verified yet. Please click the link in your inbox first, then try again.'; errorEl.style.display = 'block'; }
         }
-      } else {
-        // Attempt signing in with registration password to check status
-        if (pendingRegData) {
-          try {
-            const cred = await auth.signInWithEmailAndPassword(pendingRegData.email, pendingRegData.password);
-            if (cred.user.emailVerified) {
-              completeRegistration();
-            } else {
-              await auth.signOut();
-              if (errorEl) {
-                errorEl.textContent = "Email is not verified yet. Please check your inbox.";
-                errorEl.style.display = 'block';
-              }
-            }
-          } catch (err) {
-            if (errorEl) {
-              errorEl.textContent = err.message;
-              errorEl.style.display = 'block';
-            }
-          }
-        }
+      } catch (err) {
+        if (errorEl) { errorEl.textContent = err.message; errorEl.style.display = 'block'; }
       }
     }
 
     async function resendEmailVerificationLink() {
-      const user = auth.currentUser;
       const errorEl = $('#verify-error');
       if (errorEl) errorEl.style.display = 'none';
-
+      if (!pendingRegData) return;
       try {
-        if (user) {
-          await user.sendEmailVerification();
-          showToast('✓ Verification email resent successfully!');
-        } else if (pendingRegData) {
-          const cred = await auth.signInWithEmailAndPassword(pendingRegData.email, pendingRegData.password);
-          await cred.user.sendEmailVerification();
-          await auth.signOut();
-          showToast('✓ Verification email resent successfully!');
-        }
+        const cred = await auth.signInWithEmailAndPassword(pendingRegData.email, pendingRegData.password);
+        await cred.user.sendEmailVerification({ url: window.location.href });
+        await auth.signOut();
+        showToast('Verification email resent â€” check your inbox and spam folder!');
       } catch (err) {
-        if (errorEl) {
-          errorEl.textContent = err.message;
-          errorEl.style.display = 'block';
-        }
+        if (errorEl) { errorEl.textContent = err.message; errorEl.style.display = 'block'; }
       }
     }
 
-    function verifySMSOTP() {
-      const code = $('#verify-otp-input').value.trim();
+    // â”€â”€ PHONE / SMS VERIFICATION FLOW (Real Firebase Phone Auth) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    async function startPhoneVerification() {
+      if (recaptchaVerifier) {
+        try { recaptchaVerifier.clear(); } catch(_) {}
+        recaptchaVerifier = null;
+      }
+      phoneConfirmationResult = null;
+
+      showRegVerifyStep('phone-init');
+
+      try {
+        recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+          size: 'normal',
+          callback: async () => {
+            try {
+              phoneConfirmationResult = await auth.signInWithPhoneNumber(pendingRegData.phone, recaptchaVerifier);
+              $('#recaptcha-container').style.display = 'none';
+              $('#verify-otp-container').classList.remove('hidden');
+              const msgEl = $('#verify-step-msg');
+              if (msgEl) msgEl.textContent = 'A 6-digit SMS code was sent to ' + pendingRegData.phone + '. Enter it below.';
+            } catch (err) {
+              const eEl = $('#verify-error');
+              if (eEl) { eEl.textContent = err.message; eEl.style.display = 'block'; }
+            }
+          },
+          'expired-callback': () => {
+            const eEl = $('#verify-error');
+            if (eEl) { eEl.textContent = 'reCAPTCHA expired. Click Resend SMS to try again.'; eEl.style.display = 'block'; }
+          }
+        });
+        recaptchaVerifier.render();
+      } catch (err) {
+        throw err;
+      }
+    }
+
+    async function resendPhoneSMS() {
+      $('#verify-otp-input').value = '';
+      $('#verify-otp-container').classList.add('hidden');
+      try { await startPhoneVerification(); } catch (err) {
+        const eEl = $('#verify-error');
+        if (eEl) { eEl.textContent = err.message; eEl.style.display = 'block'; }
+      }
+    }
+
+    async function verifySMSOTP() {
+      const code = ($('#verify-otp-input').value || '').trim();
       const errorEl = $('#verify-error');
       if (errorEl) errorEl.style.display = 'none';
 
-      if (!pendingRegData || code !== pendingRegData.simulatedOTP) {
-        if (errorEl) {
-          errorEl.textContent = "Invalid code. Please check and try again.";
-          errorEl.style.display = 'block';
-        }
+      if (!code || code.length !== 6) {
+        if (errorEl) { errorEl.textContent = 'Please enter the full 6-digit code.'; errorEl.style.display = 'block'; }
+        return;
+      }
+      if (!phoneConfirmationResult) {
+        if (errorEl) { errorEl.textContent = 'Session expired. Please go back and try again.'; errorEl.style.display = 'block'; }
         return;
       }
 
-      // Create firebase auth user for phone auth registration path
-      auth.createUserWithEmailAndPassword(pendingRegData.email, pendingRegData.password)
-        .then(() => {
-          completeRegistration(true); // pass true to set phoneVerified in profile
-        })
-        .catch(err => {
-          if (errorEl) {
-            errorEl.textContent = err.message;
-            errorEl.style.display = 'block';
-          }
-        });
-    }
-
-    async function completeRegistration(phoneVerified = false) {
-      const user = auth.currentUser;
-      if (!user) return;
+      const btn = $('#verify-otp-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
 
       try {
-        // Save profile data
+        const cred = await phoneConfirmationResult.confirm(code);
+        const emailCred = firebase.auth.EmailAuthProvider.credential(pendingRegData.email, pendingRegData.password);
+        await cred.user.linkWithCredential(emailCred);
+        await completeRegistration(true);
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/invalid-verification-code') msg = 'Invalid code. Please check and try again.';
+        if (err.code === 'auth/code-expired') msg = 'Code expired. Click Resend SMS to get a new one.';
+        if (err.code === 'auth/credential-already-in-use') msg = 'This phone number is already linked to another account.';
+        if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Verify Code & Create Account'; }
+      }
+    }
+
+    // â”€â”€ SHARED HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    function showRegVerifyStep(mode) {
+      $('#register-form').classList.add('hidden');
+      $('#register-verify-step').classList.remove('hidden');
+      const eEl = $('#verify-error');
+      if (eEl) eEl.style.display = 'none';
+      $('#verify-otp-container').classList.add('hidden');
+      $('#verify-email-container').classList.add('hidden');
+      const rcEl = $('#recaptcha-container');
+      if (rcEl) rcEl.style.display = 'none';
+
+      if (mode === 'email') {
+        const t = $('#verify-step-title'); if (t) t.textContent = 'Verify Your Email';
+        const m = $('#verify-step-msg');
+        if (m) m.innerHTML = 'A verification link has been sent to <strong>' + pendingRegData.email + '</strong>.<br>Check your inbox and spam folder, click the link, then press the button below.';
+        $('#verify-email-container').classList.remove('hidden');
+        if (emailCheckInterval) clearInterval(emailCheckInterval);
+        emailCheckInterval = setInterval(async () => {
+          if (!pendingRegData) { clearInterval(emailCheckInterval); return; }
+          try {
+            const cred = await auth.signInWithEmailAndPassword(pendingRegData.email, pendingRegData.password);
+            await cred.user.reload();
+            if (cred.user.emailVerified) {
+              clearInterval(emailCheckInterval);
+              await completeRegistration(false);
+            } else {
+              await auth.signOut();
+            }
+          } catch(_) {}
+        }, 5000);
+      } else if (mode === 'phone-init') {
+        const t = $('#verify-step-title'); if (t) t.textContent = 'Verify Your Phone';
+        const m = $('#verify-step-msg');
+        if (m) m.textContent = 'Complete the reCAPTCHA below. Firebase will then send a real SMS to ' + (pendingRegData ? pendingRegData.phone : '') + '.';
+        if (rcEl) rcEl.style.display = 'flex';
+      }
+    }
+
+    async function completeRegistration(phoneVerified) {
+      const user = auth.currentUser;
+      if (!user || !pendingRegData) return;
+      try {
         await db.collection('users').doc(user.uid).set({
           uid: user.uid,
           name: pendingRegData.name,
           email: pendingRegData.email,
           phone: pendingRegData.phone,
           role: 'customer',
-          phoneVerified: phoneVerified,
+          phoneVerified: !!phoneVerified,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-
-        // Sign out so they can log in normally
         await auth.signOut();
-        
-        // Reset view
+
+        if (emailCheckInterval) { clearInterval(emailCheckInterval); emailCheckInterval = null; }
+        pendingRegData = null;
+        phoneConfirmationResult = null;
+        if (recaptchaVerifier) { try { recaptchaVerifier.clear(); } catch(_) {} recaptchaVerifier = null; }
+
         $('#register-verify-step').classList.add('hidden');
         $('#register-form').classList.remove('hidden');
-        
-        // Clear forms
-        $('#register-name').value = '';
-        $('#register-email').value = '';
-        $('#register-phone').value = '';
-        $('#register-password').value = '';
-        pendingRegData = null;
+        var clearIds = ['#register-name','#register-email','#register-phone','#register-password'];
+        for (var ci = 0; ci < clearIds.length; ci++) { var el = $(clearIds[ci]); if (el) el.value = ''; }
 
-        showToast('✓ Registration complete! You can now log in.');
-        closeAuthModal();
+        showToast('Account created! You can now log in.');
+        $$('.auth-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        $$('.auth-form').forEach(function(f) { f.classList.add('hidden'); });
+        var loginTab = document.querySelector('.auth-tab-btn[data-tab="login"]');
+        if (loginTab) { loginTab.classList.add('active'); $('#login-form')?.classList.remove('hidden'); }
       } catch (err) {
-        const errorEl = $('#verify-error');
-        if (errorEl) {
-          errorEl.textContent = err.message;
-          errorEl.style.display = 'block';
-        }
+        var eEl = $('#verify-error');
+        if (eEl) { eEl.textContent = err.message; eEl.style.display = 'block'; }
       }
     }
 
     function cancelVerification() {
-      if (emailCheckInterval) clearInterval(emailCheckInterval);
-      
-      // Delete temporary firebase auth user if it was created during email verification
-      const user = auth.currentUser;
-      if (user) {
-        user.delete().catch(err => console.log("Clean user delete skipped:", err));
-      }
-
+      if (emailCheckInterval) { clearInterval(emailCheckInterval); emailCheckInterval = null; }
+      var user = auth.currentUser;
+      if (user) { user.delete().catch(function(){}); auth.signOut().catch(function(){}); }
+      if (recaptchaVerifier) { try { recaptchaVerifier.clear(); } catch(_) {} recaptchaVerifier = null; }
       pendingRegData = null;
+      phoneConfirmationResult = null;
       $('#register-verify-step').classList.add('hidden');
       $('#register-form').classList.remove('hidden');
+      var eEl = $('#verify-error'); if (eEl) eEl.style.display = 'none';
     }
 
-    // Assign event listeners
+    // â”€â”€ ASSIGN VERIFICATION LISTENERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     $('#verify-otp-btn')?.addEventListener('click', verifySMSOTP);
+    $('#verify-otp-resend-btn')?.addEventListener('click', resendPhoneSMS);
     $('#verify-email-check-btn')?.addEventListener('click', checkEmailVerificationManually);
     $('#verify-email-resend-btn')?.addEventListener('click', resendEmailVerificationLink);
     $('#verify-back-btn')?.addEventListener('click', cancelVerification);
@@ -3638,7 +3631,7 @@
       // Retain the nav-cta-item layout class
       authItem.className = 'nav-cta-item user-dropdown-wrap';
       authItem.innerHTML = `
-        <button class="btn btn-outline user-dropdown-btn">👤 ${firstName}</button>
+        <button class="btn btn-outline user-dropdown-btn">ðŸ‘¤ ${firstName}</button>
         <ul class="user-dropdown-menu">
           <li><button id="dash-orders-btn">Order History</button></li>
           <li><button id="dash-bookings-btn">Bookings</button></li>
@@ -3773,7 +3766,7 @@
     console.log('[Firebase] Loading dashboard data for user:', user.uid, user.email);
     
 
-    // Orders — re-use the real-time fetchUserOrders listener so the
+    // Orders â€” re-use the real-time fetchUserOrders listener so the
     // dashboard always reflects live Firestore data without a separate .get() call.
     // If an existing listener is already active (window._ordersListener), it is
     // already populating #orders-history-list in real time.  We just refresh it so
@@ -3784,7 +3777,7 @@
       if (window._ordersListener) {
         try { window._ordersListener(); } catch(e) {}
       }
-      ordersList.innerHTML = `<p class="empty-msg">Loading orders…</p>`;
+      ordersList.innerHTML = `<p class="empty-msg">Loading ordersâ€¦</p>`;
       window._ordersListener = fetchUserOrders(user.uid);
     }
 
@@ -3829,7 +3822,7 @@
             }).join('');
           }
         }).catch(err => {
-          console.error('[Firebase] ✗ Error fetching bookings:', err.code, err.message);
+          console.error('[Firebase] âœ— Error fetching bookings:', err.code, err.message);
           let errorMsg = 'Failed to load bookings.';
           if (err.code === 'permission-denied') {
             errorMsg = 'Access denied. Please update Firestore security rules.';
@@ -3908,11 +3901,11 @@
 
     console.log('[Firebase] Saving booking:', bookingId);
     db.collection('bookings').doc(bookingId).set(bookingDoc).then(() => {
-      console.log('[Firebase] ✓ Booking saved successfully! Doc ID:', bookingId);
+      console.log('[Firebase] âœ“ Booking saved successfully! Doc ID:', bookingId);
       closeBookingModal();
-      showToast(`✓ Table booking submitted! ID: #${bookingId}`);
+      showToast(`âœ“ Table booking submitted! ID: #${bookingId}`);
     }).catch(err => {
-      console.error('[Firebase] ✗ Booking error:', err.code, err.message);
+      console.error('[Firebase] âœ— Booking error:', err.code, err.message);
       if (errorEl) errorEl.textContent = 'Failed: ' + (err.code === 'permission-denied' ? 'Please log in to make bookings.' : err.message);
     });
   }
@@ -3931,7 +3924,7 @@
       btn.dataset.selectedTip = val;
       const customDiv = $(`#custom-history-tip-div-${orderId}`);
       if (customDiv) customDiv.style.display = 'none';
-      btn.textContent = `Confirm £${val.toFixed(2)} Tip`;
+      btn.textContent = `Confirm Â£${val.toFixed(2)} Tip`;
     }
   };
 
@@ -3946,7 +3939,7 @@
         input.oninput = (e) => {
           const val = parseFloat(e.target.value) || 0;
           btn.dataset.selectedTip = val;
-          btn.textContent = val > 0 ? `Confirm £${val.toFixed(2)} Tip` : 'Confirm Tip';
+          btn.textContent = val > 0 ? `Confirm Â£${val.toFixed(2)} Tip` : 'Confirm Tip';
         };
       }
     }
@@ -3969,7 +3962,7 @@
     
     // Disable actions during simulated payment
     btn.disabled = true;
-    btn.textContent = 'Authorizing... 🔒';
+    btn.textContent = 'Authorizing... ðŸ”’';
     
     setTimeout(() => {
       const newTip = selectedVal;
@@ -3979,7 +3972,7 @@
         tip: newTip,
         total: updatedTotal
       }).then(() => {
-        showToast(`Thank you! Tip of ${formatPrice(newTip)} processed successfully. ❤️`);
+        showToast(`Thank you! Tip of ${formatPrice(newTip)} processed successfully. â¤ï¸`);
         loadDashboardData(); // Refresh history
       }).catch(err => {
         console.error("Error updating tip:", err);
@@ -3993,7 +3986,7 @@
 // --- CUSTOMER PORTAL INITIALIZATION AND HELPERS ---
 function initCustomerPortal() {
   if (typeof closeAuthModal === 'function') closeAuthModal();
-  showToast('✓ Logged in successfully!', 'success');
+  showToast('âœ“ Logged in successfully!', 'success');
 }
 window.initCustomerPortal = initCustomerPortal;
 
@@ -4037,13 +4030,13 @@ function watchDailySpecial() {
           position:relative;overflow:hidden;
         ">
           <div style="position:absolute;top:-10px;right:-10px;
-                      font-size:4rem;opacity:0.06">⭐</div>
-          <div style="font-size:2.5rem">${special.emoji || '⭐'}</div>
+                      font-size:4rem;opacity:0.06">â­</div>
+          <div style="font-size:2.5rem">${special.emoji || 'â­'}</div>
           <div style="flex:1">
             <div style="font-family:'Oswald',sans-serif;font-size:0.7rem;
                         color:#e84393;text-transform:uppercase;
                         letter-spacing:0.1em;margin-bottom:0.2rem">
-              ✦ Today's Special
+              âœ¦ Today's Special
             </div>
             <div style="font-family:'Playfair Display',serif;
                         color:#f5ead6;font-size:1.1rem;margin-bottom:0.2rem">
@@ -4053,7 +4046,7 @@ function watchDailySpecial() {
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-family:'Oswald',sans-serif;font-size:1.4rem;
-                        font-weight:600;color:#e8a825">£${special.price?.toFixed(2)}</div>
+                        font-weight:600;color:#e8a825">Â£${special.price?.toFixed(2)}</div>
             <div style="font-size:0.7rem;color:#e84393;
                         font-family:'Oswald',sans-serif">
               ${special.remainingQuantity} left
@@ -4105,7 +4098,7 @@ async function addSpecialToCart(specialId) {
     
     if (typeof addToCart === 'function') {
       addToCart(item, []);
-      showToast(`✓ Added ${special.name} to order!`, 'success');
+      showToast(`âœ“ Added ${special.name} to order!`, 'success');
     }
   } catch(e) {
     console.error(e);
@@ -4145,11 +4138,11 @@ async function calculateEstimatedWait() {
     waitEls.forEach(waitEl => {
       waitEl.innerHTML = `
         <span style="color:#8a7a68;font-size:0.78rem">
-          ⏱️ Current wait: 
+          â±ï¸ Current wait: 
           <strong style="color:${estimatedMins>30?'#e74c3c':estimatedMins>20?'#e8a825':'#27ae60'}">
             ${display}
           </strong>
-          · ${count} active order${count!==1?'s':''}
+          Â· ${count} active order${count!==1?'s':''}
         </span>`;
     });
     return estimatedMins;
@@ -4196,15 +4189,15 @@ function showQRWelcomeBanner(tableNum, zone) {
   `;
   banner.innerHTML = `
     <div style="color:#e8a825;font-size:1.1rem;margin-bottom:0.2rem">
-      Welcome to Table ${tableNum}! 👋
+      Welcome to Table ${tableNum}! ðŸ‘‹
     </div>
     <div style="color:#8a7a68;font-size:0.8rem;font-family:'Lora',serif">
-      ${zone ? zone.charAt(0).toUpperCase()+zone.slice(1)+' seating · ' : ''}
+      ${zone ? zone.charAt(0).toUpperCase()+zone.slice(1)+' seating Â· ' : ''}
       Browse the menu and order directly to your table
     </div>
     <button onclick="this.parentElement.remove()" style="
       background:none;border:none;color:#8a7a68;position:absolute;
-      top:8px;right:10px;cursor:pointer;font-size:1rem">✕</button>`;
+      top:8px;right:10px;cursor:pointer;font-size:1rem">âœ•</button>`;
   document.body.appendChild(banner);
   setTimeout(() => { if (banner.parentElement) banner.remove(); }, 6000);
 }
@@ -4232,7 +4225,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
       cat.items.forEach(item => {
         if (item.id === 'd5' || item.id === 'd7') return;
         if (item.id === 'd3') {
-          item.description = "Any Gourmet Burger + Side of Fries + Soft Drink (Save up to £2.00)";
+          item.description = "Any Gourmet Burger + Side of Fries + Soft Drink (Save up to Â£2.00)";
         }
         hardcoded.push({
           ...item,
@@ -4244,7 +4237,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
   window.hardcodedMenuItems = hardcoded;
   window._allMenuItems = hardcoded;
 
-  // Main function — renders menu as individual item cards with big images
+  // Main function â€” renders menu as individual item cards with big images
   function renderMenuByCategory(allItems, filterCategory = 'All') {
     const grid = document.getElementById('menu-categories-grid');
     const searchGrid = document.getElementById('menu-search-results-grid');
@@ -4290,7 +4283,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
     if (categoriesToShow.length === 0) {
       grid.innerHTML = `
         <div style="text-align:center;padding:3rem;color:#8a7a68">
-          <div style="font-size:3rem;margin-bottom:0.8rem">🍽️</div>
+          <div style="font-size:3rem;margin-bottom:0.8rem">ðŸ½ï¸</div>
           <div style="font-family:'Playfair Display',serif;color:#e8a825;font-size:1.2rem">No items available</div>
         </div>`;
       return;
@@ -4312,7 +4305,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
             border-bottom:1px solid #2a1e10;
           ">${cat}</h2>
 
-          <!-- Item cards — 4-column responsive grid -->
+          <!-- Item cards â€” 4-column responsive grid -->
           <div style="
             display:grid;
             grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
@@ -4327,7 +4320,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
                   <!-- Square image 1:1 -->
                   <div class="menu-item-card-img-wrap">
                     <img class="menu-item-card-img" src="${imgSrc}" alt="${item.name}" loading="lazy" onerror="this.src='images/menu-board.png'">
-                    <button class="order-card-fav" aria-label="Favourite" onclick="event.stopPropagation(); this.classList.toggle('active'); this.textContent = this.classList.contains('active') ? '♥' : '♡';">♡</button>
+                    <button class="order-card-fav" aria-label="Favourite" onclick="event.stopPropagation(); this.classList.toggle('active'); this.textContent = this.classList.contains('active') ? 'â™¥' : 'â™¡';">â™¡</button>
                     ${(cat === 'Hot Drinks' || item.id.startsWith('hd')) ? `
                       <div class="steam-container">
                         <span class="steam-line"></span>
@@ -4355,15 +4348,15 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
                     <!-- Price + Add button row -->
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.55rem;">
                       <span style="font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;color:#e8a825;">
-                        ${item.originalPrice ? `<span class="original-price" style="text-decoration:line-through;color:#8a7a68;margin-right:0.5rem;font-size:0.85rem">£${item.originalPrice.toFixed(2)}</span>` : ''}
-                        £${item.price?.toFixed(2)}
+                        ${item.originalPrice ? `<span class="original-price" style="text-decoration:line-through;color:#8a7a68;margin-right:0.5rem;font-size:0.85rem">Â£${item.originalPrice.toFixed(2)}</span>` : ''}
+                        Â£${item.price?.toFixed(2)}
                       </span>
 
                       ${qty === 0 ? `
                         <button class="btn-add" onclick="event.stopPropagation(); handleAddItem('${item.id}')">+ Add</button>
                       ` : `
                         <div class="qty-stepper" onclick="event.stopPropagation()">
-                          <button onclick="changeQty('${item.id}',-1)">−</button>
+                          <button onclick="changeQty('${item.id}',-1)">âˆ’</button>
                           <span>${qty}</span>
                           <button onclick="changeQty('${item.id}',1)">+</button>
                         </div>
@@ -4476,7 +4469,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
     if (results.length === 0) {
       searchGrid.innerHTML = `
         <div style="grid-column:1/-1;text-align:center;padding:3rem 1rem">
-          <div style="font-size:3rem;margin-bottom:0.8rem">🔍</div>
+          <div style="font-size:3rem;margin-bottom:0.8rem">ðŸ”</div>
           <div style="font-family:'Playfair Display',serif;color:#e8a825;
                       font-size:1.2rem;margin-bottom:0.4rem">
             No results for "${query}"
@@ -4510,7 +4503,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
         "
         onmouseover="this.style.borderColor='#c9943a'"
         onmouseout="this.style.borderColor='#2a1e10'">
-          <div style="font-size:1.8rem;text-align:center">${item.emoji||'🍽️'}</div>
+          <div style="font-size:1.8rem;text-align:center">${item.emoji||'ðŸ½ï¸'}</div>
           <div style="font-family:'Playfair Display',serif;font-size:0.9rem;
                       color:#f0ece4;cursor:pointer" onclick="window.location.hash = 'item=${item.id}'">${item.name}</div>
           <div style="font-size:0.72rem;color:#5a4a38;line-height:1.3">
@@ -4520,7 +4513,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
           <div style="display:flex;align-items:center;justify-content:space-between;
                       margin-top:auto;padding-top:0.4rem">
             <span style="font-family:'Oswald',sans-serif;font-weight:600;
-                         color:#e8a825">£${item.price?.toFixed(2)}</span>
+                         color:#e8a825">Â£${item.price?.toFixed(2)}</span>
             ${qty===0
               ? `<button onclick="handleAddItem('${item.id}')" style="
                   background:#e8a825;border:none;color:#0d0d0d;
@@ -4531,7 +4524,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
                   <button onclick="changeQty('${item.id}',-1)" style="
                     background:#2a1e10;border:1px solid #3a2e20;color:#e8a825;
                     width:22px;height:22px;border-radius:50%;cursor:pointer;
-                    font-weight:700;font-size:0.9rem">−</button>
+                    font-weight:700;font-size:0.9rem">âˆ’</button>
                   <span style="font-family:'Oswald',sans-serif;font-weight:600;
                                color:#f5ead6;min-width:16px;text-align:center">${qty}</span>
                   <button onclick="changeQty('${item.id}',1)" style="
@@ -4636,10 +4629,10 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
       // Show card brand icon
       if (event.brand && event.brand !== 'unknown') {
         const brands = {
-          visa: '💳 Visa',
-          mastercard: '💳 Mastercard', 
-          amex: '💳 Amex',
-          discover: '💳 Discover'
+          visa: 'ðŸ’³ Visa',
+          mastercard: 'ðŸ’³ Mastercard', 
+          amex: 'ðŸ’³ Amex',
+          discover: 'ðŸ’³ Discover'
         };
         const brandEl = document.getElementById('card-brand');
         if (brandEl) brandEl.textContent = brands[event.brand] || '';
@@ -4703,7 +4696,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
       stripePaymentMethodId: paymentInfo.stripePaymentMethodId || '',
       cardBrand: paymentInfo.cardBrand || '',
       cardLast4: paymentInfo.cardLast4 || '',
-      estimatedTime: orderData.orderType === 'delivery' ? `${prepVal + 15}–${prepVal + 25} mins` : `${prepVal} mins`,
+      estimatedTime: orderData.orderType === 'delivery' ? `${prepVal + 15}â€“${prepVal + 25} mins` : `${prepVal} mins`,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -4748,7 +4741,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
     refreshMenuAfterCartChange();
 
     renderConfirmationScreen(orderDoc, savedItems, savedTotal, prepVal, 'card');
-    showToast('Order saved to your account ✓');
+    showToast('Order saved to your account âœ“');
   }
 
   async function handleStripePayment() {
@@ -4933,7 +4926,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
           "
           onmouseover="this.style.borderColor='#c9943a';this.style.color='#f5ead6'"
           onmouseout="this.style.borderColor='#2a1e10';this.style.color='#8a7a68'">
-            ✕
+            âœ•
           </button>
         </div>
         
@@ -5073,7 +5066,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
             font-size: 0.9rem;
             cursor: pointer;
             letter-spacing: 0.05em;
-          ">BOOK A TABLE →</button>
+          ">BOOK A TABLE â†’</button>
         </div>
       </div>
       
@@ -5200,7 +5193,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
         badgeBg: '#27ae60',
         badgeColor: '#fff',
         label: 'AVAILABLE',
-        icon: '✓',
+        icon: 'âœ“',
         pulse: true
       },
       occupied: {
@@ -5210,7 +5203,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
         badgeBg: '#e74c3c',
         badgeColor: '#fff',
         label: 'OCCUPIED',
-        icon: '●',
+        icon: 'â—',
         pulse: false
       }
     };
@@ -5285,7 +5278,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
             gap: 0.4rem;
             margin-bottom: 0.5rem;
           ">
-            <span style="font-size:1rem">👥</span>
+            <span style="font-size:1rem">ðŸ‘¥</span>
             <span style="
               font-family: 'Oswald', sans-serif;
               font-size: 0.82rem;
@@ -5303,7 +5296,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
               align-items: center;
               gap: 0.3rem;
             ">
-              <span>⏱️</span>
+              <span>â±ï¸</span>
               <span>Occupied for ${occupiedTime}</span>
             </div>` : ''}
           
@@ -5316,7 +5309,7 @@ window.showQRWelcomeBanner = showQRWelcomeBanner;
               align-items: center;
               gap: 0.3rem;
             ">
-              <span>✓</span>
+              <span>âœ“</span>
               <span>Walk in or book now</span>
             </div>` : ''}
           
