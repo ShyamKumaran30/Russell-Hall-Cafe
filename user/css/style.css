@@ -4,24 +4,24 @@
 
 /* --- DESIGN TOKENS --- */
 :root {
-  --bg-primary: #0d0d0d;
-  --bg-secondary: #1a1209;
-  --bg-card: rgba(26, 18, 9, 0.88);
-  --bg-glass: rgba(26, 18, 9, 0.55);
-  --gold: #e8a825;
-  --gold-light: #f4c54a;
-  --gold-dark: #c9943a;
-  --pink-accent: #e84393;
-  --cream: #f5ead6;
-  --orange: #f07021;
-  --chalk-white: #f0ece4;
-  --border-gold: rgba(201, 148, 58, 0.3);
-  --border-gold-strong: rgba(201, 148, 58, 0.6);
+  --bg-primary: #000000;
+  --bg-secondary: #0c0c0c;
+  --bg-card: rgba(12, 12, 12, 0.92);
+  --bg-glass: rgba(12, 12, 12, 0.65);
+  --gold: #ff6600;
+  --gold-light: #ff8533;
+  --gold-dark: #cc5200;
+  --pink-accent: #ff3300;
+  --cream: #ffffff;
+  --orange: #ff6600;
+  --chalk-white: #ffffff;
+  --border-gold: rgba(255, 102, 0, 0.25);
+  --border-gold-strong: rgba(255, 102, 0, 0.55);
   --success-green: #27ae60;
   --error-red: #e74c3c;
-  --shadow-gold: 0 8px 32px rgba(232, 168, 37, 0.15);
-  --shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 40px rgba(232, 168, 37, 0.2);
+  --shadow-gold: 0 8px 32px rgba(255, 102, 0, 0.18);
+  --shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 40px rgba(255, 102, 0, 0.22);
   --nav-height: 72px;
   --bottom-nav-height: 68px;
   --radius: 12px;
