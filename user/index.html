@@ -666,30 +666,7 @@
             <label for="table-number">Table Number</label>
             <input type="text" id="table-number" placeholder="e.g. 12">
           </div>
-          <div class="form-group hidden" id="delivery-fields">
-            <div class="delivery-partners-notice">
-              <p style="display:flex;align-items:center;justify-content:center;gap:0.35rem;font-weight:600;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;color:var(--primary-accent);"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg> We deliver locally within 3 miles.</p>
-              <p style="font-size: 0.78rem; opacity: 0.8; margin-top: 0.35rem;">Prefer ordering via your favourite delivery apps? Find us on:</p>
-              <div class="delivery-partner-buttons">
-                <a href="https://www.deliveroo.co.uk" target="_blank" class="partner-btn deliveroo">
-                  <span class="partner-icon" style="display:inline-flex;align-items:center;margin-right:4px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><path d="M12 2v9M8 5v6M16 5v6"></path></svg>
-                  </span> Deliveroo
-                </a>
-                <a href="https://www.ubereats.com" target="_blank" class="partner-btn ubereats">
-                  <span class="partner-icon" style="display:inline-flex;align-items:center;margin-right:4px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M18 8A6 6 0 0 0 6 8c0 7 3 9 6 13 3-4 6-6 6-13z"></path><circle cx="12" cy="8" r="2"></circle></svg>
-                  </span> Uber Eats
-                </a>
-              </div>
-            </div>
-            <label for="del-address">Delivery Address *</label>
-            <input type="text" id="del-address" placeholder="Street address">
-            <div style="display:flex;gap:0.75rem;margin-top:0.75rem">
-              <input type="text" id="del-city" placeholder="City" style="flex:1">
-              <input type="text" id="del-zip" placeholder="Postcode" style="flex:1">
-            </div>
-          </div>
+
           <div class="form-group">
             <label for="instructions">Special Instructions</label>
             <textarea id="instructions" rows="2" placeholder="Allergies, extras, timing…"></textarea>
@@ -1143,8 +1120,6 @@
   <div class="modal-overlay" id="booking-modal">
     <div class="modal" style="max-width: 450px;">
       <h3>Book a Table</h3>
-      <div id="booking-modal-status-banner" style="margin: 0.5rem 0 1rem 0; display: none;"></div>
-      <div id="customer-floor-map" style="margin-bottom: 1rem; width: 100%; height: auto; overflow: hidden;"></div>
       <form id="booking-form">
         <div class="form-group">
           <label for="book-name">Name *</label>
@@ -1191,12 +1166,6 @@
             </select>
           </div>
         </div>
-        <div class="form-group" style="margin-top: 0.75rem;">
-          <label for="book-table">Preferred Table (Live Status)</label>
-          <select id="book-table" style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-gold); color: var(--cream); padding: 0.6rem; border-radius: 6px; font-family: inherit;">
-            <option value="any">Any Available Table</option>
-          </select>
-        </div>
         <button type="submit" class="btn btn-gold" style="width: 100%; margin-top: 1.25rem;">Confirm Reservation</button>
         <p class="error-msg" id="booking-error" style="color:var(--error-red);margin-top:0.5rem;font-size:0.82rem;text-align:center"></p>
       </form>
@@ -1204,6 +1173,28 @@
         <button class="btn btn-outline" id="booking-cancel" style="width:100%">Cancel</button>
       </div>
     </div>
+
+  <!-- ===== DELIVERY PARTNERS MODAL ===== -->
+  <div class="modal-overlay" id="delivery-partner-modal">
+    <div class="modal" style="max-width: 420px; text-align: center; padding: 2.5rem 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🚴</div>
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold); margin-bottom: 0.75rem; font-size: 1.6rem;">Delivery Orders</h3>
+      <p style="font-size: 0.92rem; opacity: 0.85; line-height: 1.6; margin-bottom: 1.75rem;">
+        For local delivery, please place your order via our official delivery partners. Direct delivery orders are not accepted on our website.
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+        <a href="https://www.deliveroo.co.uk" target="_blank" class="partner-btn deliveroo" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem; font-size: 1.05rem; border-radius: 8px; font-weight: bold; background: #00cdbc; color: white; border: none; text-decoration: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><path d="M12 2v9M8 5v6M16 5v6"></path></svg>
+          Order via Deliveroo
+        </a>
+        <a href="https://www.ubereats.com" target="_blank" class="partner-btn ubereats" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem; font-size: 1.05rem; border-radius: 8px; font-weight: bold; background: #06c167; color: white; border: none; text-decoration: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7 3 9 6 13 3-4 6-6 6-13z"></path><circle cx="12" cy="8" r="2"></circle></svg>
+          Order via Uber Eats
+        </a>
+      </div>
+      <button class="btn btn-outline" id="delivery-partner-cancel" style="width: 100%; padding: 0.75rem;">Cancel & Return</button>
+    </div>
+  </div>
   <!-- ===== LIGHTBOX MODAL ===== -->
   <div class="modal-overlay" id="lightbox-modal">
     <div class="lightbox-content">

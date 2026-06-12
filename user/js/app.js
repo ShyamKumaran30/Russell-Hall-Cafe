@@ -1228,8 +1228,12 @@
   // --- CHECKOUT ---
   function openCheckout() {
     if (!cart.length) { showToast('Your cart is empty!'); return; }
-    closeCart();
     const orderType = document.querySelector('input[name="order-type"]:checked');
+    if (orderType && orderType.value === 'delivery') {
+      openDeliveryPartnerModal('cart');
+      return;
+    }
+    closeCart();
     if (orderType) $('#order-type-checkout').value = orderType.value;
     goToStep(1);
     updateOrderTypeFields();
@@ -1289,7 +1293,10 @@
 
     const orderType = $('#order-type-checkout').value;
     if (orderType === 'delivery') {
-      if (!$('#del-address').value.trim() || !$('#del-city').value.trim() || !$('#del-zip').value.trim()) {
+      const addr = $('#del-address');
+      const city = $('#del-city');
+      const zip = $('#del-zip');
+      if (!addr || !city || !zip || !addr.value.trim() || !city.value.trim() || !zip.value.trim()) {
         errEl.textContent = 'Please fill in all delivery address fields.';
         return false;
       }
@@ -1691,9 +1698,9 @@
       orderType: sanitizeInput($('#order-type-checkout').value, 20),
       tableNumber: sanitizeInput($('#table-number').value.trim(), 50),
       instructions: sanitizeInput($('#instructions').value.trim(), 500),
-      deliveryAddress: isDelivery ? sanitizeInput($('#del-address').value.trim(), 200) : '',
-      deliveryCity: isDelivery ? sanitizeInput($('#del-city').value.trim(), 100) : '',
-      deliveryZip: isDelivery ? sanitizeInput($('#del-zip').value.trim(), 20) : '',
+      deliveryAddress: (isDelivery && $('#del-address')) ? sanitizeInput($('#del-address').value.trim(), 200) : '',
+      deliveryCity: (isDelivery && $('#del-city')) ? sanitizeInput($('#del-city').value.trim(), 100) : '',
+      deliveryZip: (isDelivery && $('#del-zip')) ? sanitizeInput($('#del-zip').value.trim(), 20) : '',
       items: [...cart],
       subtotal: getSubtotal(),
       tip: tipAmount,
@@ -2439,9 +2446,79 @@
       updateCheckoutTotals();
     });
 
-    // Order type
-    $('#order-type-checkout')?.addEventListener('change', () => {
-      updateOrderTypeFields();
+    // Order type selection & delivery partner modal interception
+    let lastSelectedOrderType = 'dine-in';
+    
+    // Listen to radio changes in the cart drawer
+    document.querySelectorAll('input[name="order-type"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          if (e.target.value === 'delivery') {
+            openDeliveryPartnerModal('cart');
+          } else {
+            lastSelectedOrderType = e.target.value;
+            const checkoutSelect = document.getElementById('order-type-checkout');
+            if (checkoutSelect) {
+              checkoutSelect.value = e.target.value;
+              updateOrderTypeFields();
+            }
+          }
+        }
+      });
+    });
+
+    // Update last selected order type from current radio status on init
+    const initialCheckedRadio = document.querySelector('input[name="order-type"]:checked');
+    if (initialCheckedRadio) {
+      lastSelectedOrderType = initialCheckedRadio.value;
+    }
+
+    // Modal close/cancel buttons
+    $('#delivery-partner-cancel')?.addEventListener('click', closeDeliveryPartnerModal);
+    $('#delivery-partner-modal')?.addEventListener('click', e => {
+      if (e.target.id === 'delivery-partner-modal') closeDeliveryPartnerModal();
+    });
+
+    function openDeliveryPartnerModal(source) {
+      const modal = document.getElementById('delivery-partner-modal');
+      if (!modal) return;
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      modal.dataset.source = source;
+    }
+
+    function closeDeliveryPartnerModal() {
+      const modal = document.getElementById('delivery-partner-modal');
+      if (!modal) return;
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+      
+      const source = modal.dataset.source;
+      if (source === 'cart') {
+        const radio = document.querySelector(`input[name="order-type"][value="${lastSelectedOrderType}"]`);
+        if (radio) radio.checked = true;
+      } else if (source === 'checkout') {
+        const select = document.getElementById('order-type-checkout');
+        if (select) {
+          select.value = lastSelectedOrderType;
+          updateOrderTypeFields();
+        }
+      }
+    }
+
+    // Expose functions globally for dynamic/onclick elements
+    window.openDeliveryPartnerModal = openDeliveryPartnerModal;
+    window.closeDeliveryPartnerModal = closeDeliveryPartnerModal;
+
+    $('#order-type-checkout')?.addEventListener('change', (e) => {
+      if (e.target.value === 'delivery') {
+        openDeliveryPartnerModal('checkout');
+      } else {
+        lastSelectedOrderType = e.target.value;
+        updateOrderTypeFields();
+        const radio = document.querySelector(`input[name="order-type"][value="${e.target.value}"]`);
+        if (radio) radio.checked = true;
+      }
     });
 
     // Payment method options
@@ -2459,10 +2536,7 @@
       e.preventDefault();
       openUserDashboard('orders');
     });
-    $('#nav-live-tables-btn')?.addEventListener('click', e => {
-      e.preventDefault();
-      openLiveTablesView();
-    });
+
 
     // Confirmation buttons
     $('#confirm-back')?.addEventListener('click', () => {
@@ -2552,11 +2626,7 @@
       return;
     }
 
-    // Subscribe to live tables floor map updates immediately
-    if (typeof watchTables === 'function') {
-      watchTables('customer-floor-map', false);
-      watchTables('customer-floor-map-dash', false);
-    }
+
     console.log("[Firebase] Checking menu database state...");
     
     // First, check if categories collection is empty
@@ -2697,7 +2767,6 @@
     });
 
     db.collection('menuItems')
-      .where('status', '==', 'Active')
       .onSnapshot(snapshot => {
         let items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         items = items.filter(item => {
@@ -3106,6 +3175,24 @@
       }
 
       if (user) {
+        // Enforce email verification check for customers
+        if (!user.emailVerified) {
+          try {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            const role = userDoc.exists ? (userDoc.data().role || 'customer') : 'customer';
+            if (role === 'customer') {
+              console.log("[Auth] Unverified customer session detected. Signing out.");
+              currentUser = null;
+              currentUserProfile = null;
+              currentUserRole = null;
+              await auth.signOut();
+              return;
+            }
+          } catch (err) {
+            console.error("Error checking verification role:", err);
+          }
+        }
+
         currentUser = user;
         
         try {
@@ -3189,7 +3276,10 @@
       const phone = $('#register-phone').value.trim();
       const password = $('#register-password').value;
       const errorEl = $('#register-error');
-      if (errorEl) errorEl.textContent = '';
+      if (errorEl) {
+        errorEl.textContent = '';
+        errorEl.style.color = '#e74c3c';
+      }
 
       if (!name || !email || !phone || !password) {
         if (errorEl) errorEl.textContent = 'Please fill in all fields.';
@@ -3204,8 +3294,24 @@
         if (errorEl) errorEl.textContent = 'Please enter a valid phone number with country code (e.g. +447123456789 or UK 07123456789).';
         return;
       }
-      if (password.length < 6) {
-        if (errorEl) errorEl.textContent = 'Password must be at least 6 characters.';
+
+      // Strong password validation
+      const hasUppercase = /[A-Z]/.test(password);
+      const hasLowercase = /[a-z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+      
+      if (password.length < 8 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+        if (errorEl) {
+          errorEl.innerHTML = `Password must be at least 8 characters long and include:
+            <ul style="margin:0.25rem 0 0 1rem; padding:0; text-align:left; font-size:0.8rem;">
+              <li>At least one uppercase letter (A-Z)</li>
+              <li>At least one lowercase letter (a-z)</li>
+              <li>At least one number (0-9)</li>
+              <li>At least one special character (e.g. !@#$)</li>
+            </ul>`;
+          errorEl.style.display = 'block';
+        }
         return;
       }
 
@@ -3214,6 +3320,11 @@
 
       auth.createUserWithEmailAndPassword(email, password)
         .then(cred => {
+          // Send verification email
+          cred.user.sendEmailVerification().catch(err => {
+            console.error("Error sending verification email:", err);
+          });
+
           return db.collection('users').doc(cred.user.uid).set({
             uid: cred.user.uid,
             name: name,
@@ -3224,11 +3335,30 @@
           });
         })
         .then(() => {
-          closeAuthModal();
-          showToast('✓ Account registered successfully!');
+          // Sign out immediately so they cannot log in yet
+          auth.signOut();
+
+          if (errorEl) {
+            errorEl.style.color = '#2ecc71';
+            errorEl.innerHTML = `<span style="font-weight:600; display:block; margin-bottom:0.5rem;">✓ Registration successful!</span>
+              A verification email has been sent to <strong>${email}</strong>. Please check your inbox and verify your email before logging in.`;
+            errorEl.style.display = 'block';
+          }
+
+          // Clear form fields
+          $('#register-name').value = '';
+          $('#register-email').value = '';
+          $('#register-phone').value = '';
+          $('#register-password').value = '';
+
+          showToast('✓ Registration successful! Verification email sent.');
         })
         .catch(err => {
-          if (errorEl) errorEl.textContent = err.message;
+          if (errorEl) {
+            errorEl.style.color = '#e74c3c';
+            errorEl.textContent = err.message;
+            errorEl.style.display = 'block';
+          }
         });
     });
 
@@ -3352,24 +3482,7 @@
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
     
-    if (activeTab === 'live-tables') {
-      $('#dashboard-logged-in-view')?.classList.remove('hidden');
-      $('#dashboard-guest-lookup-view')?.classList.add('hidden');
-      
-      $$('.dash-tab-btn').forEach(btn => {
-        if (currentUser) {
-          btn.style.display = 'inline-block';
-        } else {
-          btn.style.display = btn.dataset.dash === 'live-tables' ? 'inline-block' : 'none';
-        }
-      });
-      
-      showDashboardTab('live-tables');
-      if (currentUser) {
-        loadDashboardData();
-      }
-      return;
-    }
+
     
     if (currentUser) {
       $('#dashboard-logged-in-view')?.classList.remove('hidden');
@@ -3396,7 +3509,6 @@
     $$('.dash-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.dash === tab));
     $('#dash-orders-section').classList.toggle('hidden', tab !== 'orders');
     $('#dash-bookings-section').classList.toggle('hidden', tab !== 'bookings');
-    $('#dash-live-tables-section')?.classList.toggle('hidden', tab !== 'live-tables');
   }
 
   function handleGuestLookupSubmit(e) {
@@ -3546,7 +3658,8 @@
     const time = sanitizeInput($('#book-time').value, 20);
     const duration = sanitizeInput($('#book-duration').value, 20);
     const guests = sanitizeInput($('#book-guests').value, 10);
-    const table = sanitizeInput($('#book-table').value.trim(), 50);
+    const tableEl = $('#book-table');
+    const table = tableEl ? sanitizeInput(tableEl.value.trim(), 50) : 'any';
     const errorEl = $('#booking-error');
     if (errorEl) errorEl.textContent = '';
 

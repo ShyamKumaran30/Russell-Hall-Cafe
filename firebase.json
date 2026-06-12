@@ -13,11 +13,6 @@
       "target": "admin",
       "public": "admin",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
-    },
-    {
-      "target": "kitchen",
-      "public": "kitchen",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
     }
   ]
 }

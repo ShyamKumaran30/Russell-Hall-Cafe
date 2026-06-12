@@ -325,7 +325,6 @@
 
     <div class="admin-tabs">
       <button class="admin-tab-btn active" data-panel="orders">Active Orders</button>
-      <button class="admin-tab-btn" data-panel="floor-plan">Live Table Update</button>
       <button class="admin-tab-btn" data-panel="inventory">Stock Management</button>
       <button class="admin-tab-btn" data-panel="staff">Staff Management</button>
       <button class="admin-tab-btn" data-panel="analytics">Sales & Reports</button>
@@ -352,21 +351,7 @@
       </div>
     </main>
 
-    <!-- FLOOR PLAN PANEL -->
-    <main class="admin-panel" id="panel-floor-plan">
-      <div class="admin-tables-layout" style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: start;">
-        <!-- Left side: Interactive SVG floor plan -->
-        <div class="analytics-card" style="flex: 1 1 450px; min-width: 320px;">
-          <h3>Interactive Floor Plan</h3>
-          <div id="admin-floor-map" style="margin-top: 1rem; width: 100%; height: auto;"></div>
-        </div>
-        <!-- Right side: Status management cards -->
-        <div class="analytics-card" style="flex: 1 1 450px; min-width: 320px;">
-          <h3>Live Table Controls</h3>
-          <div id="admin-tables-container" style="margin-top: 1rem;"></div>
-        </div>
-      </div>
-    </main>
+
 
     <!-- MENU CUSTOMIZER PANEL -->
     <main class="admin-panel" id="panel-menu">
@@ -680,7 +665,6 @@
               <div style="display:flex; flex-direction:column;">
                 <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Role</label>
                 <select id="create-staff-role" class="admin-select" style="width:100%; box-sizing:border-box;">
-                  <option value="kitchen">Kitchen Staff / Chef</option>
                   <option value="staff">Staff Assistant</option>
                   <option value="admin">Admin Manager</option>
                 </select>
@@ -694,7 +678,7 @@
           <div class="analytics-card" style="height: fit-content;">
             <h3>Update User Role / RBAC</h3>
             <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1.25rem; line-height: 1.4;">
-              Promote an existing customer by email, or change a staff member's role (Manager / Admin / Kitchen).
+              Promote an existing customer by email, or change a staff member's role (Manager / Admin / Staff).
             </p>
             <form id="update-role-form" style="display:flex; flex-direction:column; gap: 0.75rem;">
               <div style="display:flex; flex-direction:column;">
@@ -705,7 +689,6 @@
                 <label style="font-size:0.75rem; text-transform:uppercase; margin-bottom:0.25rem; font-weight:600; opacity:0.8;">Target Role</label>
                 <select id="update-role-select" class="admin-select" style="width:100%; box-sizing:border-box;">
                   <option value="customer">Customer</option>
-                  <option value="kitchen">Kitchen Staff / Chef</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Admin Manager</option>
                   <option value="superadmin">Superadmin</option>
@@ -1283,14 +1266,7 @@
       if (initialized) return;
       initialized = true;
 
-      // Seeding and watching tables floor plan
-      try {
-        seedTablesIfEmpty();
-        startAdminTablesWatcher();
-        watchTables('admin-floor-map', true);
-      } catch (err) {
-        console.error("Error initializing live tables floor plan:", err);
-      }
+
 
       // Initialize Modular Inventory System
       try {
