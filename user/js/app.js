@@ -1228,12 +1228,8 @@
   // --- CHECKOUT ---
   function openCheckout() {
     if (!cart.length) { showToast('Your cart is empty!'); return; }
-    const orderType = document.querySelector('input[name="order-type"]:checked');
-    if (orderType && orderType.value === 'delivery') {
-      openDeliveryPartnerModal('cart');
-      return;
-    }
     closeCart();
+    const orderType = document.querySelector('input[name="order-type"]:checked');
     if (orderType) $('#order-type-checkout').value = orderType.value;
     goToStep(1);
     updateOrderTypeFields();
@@ -1270,6 +1266,10 @@
   }
 
   function validateStep1() {
+    const orderType = $('#order-type-checkout')?.value;
+    if (orderType === 'delivery') {
+      return false;
+    }
     const name = $('#cust-name').value.trim();
     const email = $('#cust-email').value.trim();
     const phone = $('#cust-phone').value.trim();
@@ -1309,8 +1309,20 @@
     const orderTypeEl = $('#order-type-checkout');
     if (!orderTypeEl) return;
     const orderType = orderTypeEl.value;
-    $('#table-group')?.classList.toggle('hidden', orderType !== 'dine-in');
-    $('#delivery-fields')?.classList.toggle('hidden', orderType !== 'delivery');
+    
+    const isDelivery = (orderType === 'delivery');
+    
+    // Toggle standard details fields and continue button
+    $('#standard-checkout-fields')?.classList.toggle('hidden', isDelivery);
+    $('#checkout-step-1 .step-nav')?.classList.toggle('hidden', isDelivery);
+    
+    // Toggle delivery partner buttons block
+    $('#delivery-partner-checkout-block')?.classList.toggle('hidden', !isDelivery);
+    
+    // Toggle table number for dine-in if not delivery
+    if (!isDelivery) {
+      $('#table-group')?.classList.toggle('hidden', orderType !== 'dine-in');
+    }
   }
 
   function renderCheckout() {
@@ -2373,6 +2385,17 @@
   function initCheckout() {
     $('#checkout-close')?.addEventListener('click', closeCheckout);
 
+    $('#checkout-switch-collect-btn')?.addEventListener('click', () => {
+      const select = document.getElementById('order-type-checkout');
+      if (select) {
+        select.value = 'collection';
+        lastSelectedOrderType = 'collection';
+        updateOrderTypeFields();
+        const radio = document.querySelector('input[name="order-type"][value="collection"]');
+        if (radio) radio.checked = true;
+      }
+    });
+
     // Step navigation
     $('#step1-next')?.addEventListener('click', () => {
       if (validateStep1()) { renderCheckout(); goToStep(2); }
@@ -2453,15 +2476,11 @@
     document.querySelectorAll('input[name="order-type"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
         if (e.target.checked) {
-          if (e.target.value === 'delivery') {
-            openDeliveryPartnerModal('cart');
-          } else {
-            lastSelectedOrderType = e.target.value;
-            const checkoutSelect = document.getElementById('order-type-checkout');
-            if (checkoutSelect) {
-              checkoutSelect.value = e.target.value;
-              updateOrderTypeFields();
-            }
+          lastSelectedOrderType = e.target.value;
+          const checkoutSelect = document.getElementById('order-type-checkout');
+          if (checkoutSelect) {
+            checkoutSelect.value = e.target.value;
+            updateOrderTypeFields();
           }
         }
       });
@@ -2511,14 +2530,10 @@
     window.closeDeliveryPartnerModal = closeDeliveryPartnerModal;
 
     $('#order-type-checkout')?.addEventListener('change', (e) => {
-      if (e.target.value === 'delivery') {
-        openDeliveryPartnerModal('checkout');
-      } else {
-        lastSelectedOrderType = e.target.value;
-        updateOrderTypeFields();
-        const radio = document.querySelector(`input[name="order-type"][value="${e.target.value}"]`);
-        if (radio) radio.checked = true;
-      }
+      lastSelectedOrderType = e.target.value;
+      updateOrderTypeFields();
+      const radio = document.querySelector(`input[name="order-type"][value="${e.target.value}"]`);
+      if (radio) radio.checked = true;
     });
 
     // Payment method options

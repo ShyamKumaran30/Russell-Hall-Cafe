@@ -642,34 +642,50 @@
       <div class="checkout-step active" id="checkout-step-1">
         <div class="checkout-section">
           <h3>Your Details</h3>
-          <div class="form-group">
-            <label for="cust-name">Name *</label>
-            <input type="text" id="cust-name" required autocomplete="name" placeholder="Full name">
-          </div>
-          <div class="form-group">
-            <label for="cust-email">Email *</label>
-            <input type="email" id="cust-email" required autocomplete="email" placeholder="you@example.com">
-          </div>
-          <div class="form-group">
-            <label for="cust-phone">Phone *</label>
-            <input type="tel" id="cust-phone" required autocomplete="tel" placeholder="07xxx xxx xxx">
-          </div>
-          <div class="form-group">
-            <label for="order-type-checkout">Order Type</label>
-            <select id="order-type-checkout">
-              <option value="dine-in">Dine In</option>
-              <option value="collection">Collection</option>
-              <option value="delivery">Delivery</option>
-            </select>
-          </div>
-          <div class="form-group" id="table-group">
-            <label for="table-number">Table Number</label>
-            <input type="text" id="table-number" placeholder="e.g. 12">
+          <div id="standard-checkout-fields">
+            <div class="form-group">
+              <label for="cust-name">Name *</label>
+              <input type="text" id="cust-name" required autocomplete="name" placeholder="Full name">
+            </div>
+            <div class="form-group">
+              <label for="cust-email">Email *</label>
+              <input type="email" id="cust-email" required autocomplete="email" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+              <label for="cust-phone">Phone *</label>
+              <input type="tel" id="cust-phone" required autocomplete="tel" placeholder="07xxx xxx xxx">
+            </div>
+            <div class="form-group">
+              <label for="order-type-checkout">Order Type</label>
+              <select id="order-type-checkout">
+                <option value="dine-in">Dine In</option>
+                <option value="collection">Collection</option>
+                <option value="delivery">Delivery</option>
+              </select>
+            </div>
+            <div class="form-group" id="table-group">
+              <label for="table-number">Table Number</label>
+              <input type="text" id="table-number" placeholder="e.g. 12">
+            </div>
+            <div class="form-group">
+              <label for="instructions">Special Instructions</label>
+              <textarea id="instructions" rows="2" placeholder="Allergies, extras, timing…"></textarea>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="instructions">Special Instructions</label>
-            <textarea id="instructions" rows="2" placeholder="Allergies, extras, timing…"></textarea>
+          <!-- Delivery Partner Block inside checkout details step -->
+          <div class="form-group hidden" id="delivery-partner-checkout-block" style="text-align: center; padding: 1.5rem; background: rgba(26, 18, 9, 0.55); border: 1px solid rgba(201, 148, 58, 0.2); border-radius: 8px; margin-top: 1rem;">
+            <p style="display:flex;align-items:center;justify-content:center;gap:0.35rem;font-weight:600;color:var(--gold);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;color:var(--gold);"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg> Direct delivery orders are not accepted on our website.</p>
+            <p style="font-size: 0.88rem; opacity: 0.8; margin-top: 0.5rem; margin-bottom: 1.25rem;">Please place your delivery order via our official partners:</p>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; max-width: 300px; margin: 0 auto;">
+              <a href="https://www.deliveroo.co.uk" target="_blank" class="partner-btn deliveroo" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; font-size: 0.95rem; border-radius: 6px; font-weight: bold; background: #00cdbc; color: white; border: none; text-decoration: none;">
+                Order via Deliveroo
+              </a>
+              <a href="https://www.ubereats.com" target="_blank" class="partner-btn ubereats" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; font-size: 0.95rem; border-radius: 6px; font-weight: bold; background: #06c167; color: white; border: none; text-decoration: none;">
+                Order via Uber Eats
+              </a>
+            </div>
+            <button type="button" class="btn btn-outline" id="checkout-switch-collect-btn" style="margin-top: 1.25rem; width: auto; padding: 0.5rem 1.5rem; font-size: 0.85rem;">Switch to Collection</button>
           </div>
         </div>
         <div class="step-nav">
